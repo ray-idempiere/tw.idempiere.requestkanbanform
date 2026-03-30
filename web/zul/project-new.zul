@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zk>
+ <window title="New Project"
+         position="center,center" closable="true"
+         border="normal" width="380px" height="auto">
+  <vlayout spacing="0" style="padding:12px;">
+   <hlayout valign="middle" spacing="8px" style="margin-bottom:6px;">
+    <label id="lblName" style="font-size:12px;color:#555;width:80px;"/>
+    <textbox id="txtProjectName" hflex="1"/>
+   </hlayout>
+   <hlayout valign="middle" spacing="8px" style="margin-bottom:6px;">
+    <label id="lblStart" style="font-size:12px;color:#555;width:80px;"/>
+    <datebox id="dtStart" format="yyyy/MM/dd" hflex="1"/>
+   </hlayout>
+   <hlayout valign="middle" spacing="8px" style="margin-bottom:10px;">
+    <label id="lblEnd" style="font-size:12px;color:#555;width:80px;"/>
+    <datebox id="dtEnd" format="yyyy/MM/dd" hflex="1"/>
+   </hlayout>
+   <hlayout spacing="6px" style="justify-content:flex-end;">
+    <button id="btnProjectCancel" label="Cancel"/>
+    <button id="btnProjectSave"   label="Save" sclass="btn-primary"/>
+   </hlayout>
+  </vlayout>
+ </window>
+</zk>

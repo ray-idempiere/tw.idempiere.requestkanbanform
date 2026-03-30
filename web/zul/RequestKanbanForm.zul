@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<zk xmlns:n="native">
+ <n:link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons"/>
+ <n:style>
+  /* Material Icons in ZK buttons via iconSclass */
+  .rk-icon-add::before,
+  .rk-icon-gantt::before,
+  .rk-icon-list::before,
+  .rk-icon-kanban::before,
+  .rk-icon-new-project::before,
+  .rk-icon-save::before,
+  .rk-icon-cancel::before,
+  .rk-icon-close::before,
+  .rk-icon-zoom::before,
+  .rk-icon-attach::before {
+    font-family: 'Material Icons';
+    font-size: 17px;
+    line-height: 1;
+    vertical-align: middle;
+    margin-right: 4px;
+  }
+  .rk-icon-add::before         { content: '\e148'; } /* add_circle_outline */
+  .rk-icon-gantt::before       { content: '\e916'; } /* date_range */
+  .rk-icon-list::before        { content: '\e241'; } /* format_list_bulleted */
+  .rk-icon-kanban::before      { content: '\e8f2'; } /* view_column */
+  .rk-icon-new-project::before { content: '\e2cc'; } /* create_new_folder */
+  .rk-icon-save::before        { content: '\e5ca'; } /* check */
+  .rk-icon-cancel::before      { content: '\e5cd'; } /* close (X) */
+  .rk-icon-close::before       { content: '\e5cd'; } /* close */
+  .rk-icon-zoom::before        { content: '\e89e'; } /* open_in_new */
+  .rk-icon-attach::before       { content: '\e226'; } /* attach_file */
+  /* Material Icons used as label (ligature mode) */
+  .rk-mat-icon { font-family: 'Material Icons'; font-size: 16px; vertical-align: middle; color: #777; }
+  .rk-kanban-hlayout { display: flex !important; align-items: stretch; }
+  .rk-kanban-hlayout > .z-hlayout-inner { height: 100%; display: flex; flex-direction: column; }
+  .rk-kanban-hlayout > .z-hlayout-inner > .z-vlayout { height: 100%; }
+  .rk-add-card-btn {
+    width: 100%; text-align: left; color: #5e6c84;
+    background: transparent; border: 2px dashed #bbb;
+    border-radius: 6px; padding: 6px 10px; margin-top: 4px; cursor: pointer;
+  }
+  .rk-add-card-btn:hover { background: #dfe1e6; border-color: #999; }
+  .rk-pill {
+    padding: 4px 12px !important; border-radius: 12px !important;
+    border: 1px solid #ccc !important; background: #fff !important;
+    color: #333 !important; font-size: 12px !important;
+    cursor: pointer !important; box-shadow: none !important;
+  }
+  .rk-pill-active {
+    background: #0052cc !important; color: #fff !important;
+    border-color: #0052cc !important;
+  }
+  .rk-gantt-container { width: 100%; overflow: auto; }
+  .rk-project-panel { padding: 4px 0; }
+  .rk-dialog-grid .z-row-inner { padding: 4px 2px; }
+  .rk-dialog-grid .z-grid-body { border: none; }
+ </n:style>
+
+ <!-- onCreate fires after doAfterCompose; postInitRefresh forces a clean
+      re-evaluation of all @load bindings so the initial render is correct. -->
+ <window id="requestkanban" border="none" width="100%" height="100%"
+         viewModel="@id('vm') @init(self.parent.attributes.vm)"
+         onCreate="@command('postInitRefresh')">
+
+  <!-- Templates at window level so BindChildRenderer can find them via ancestor traversal -->
+  <template name="kanbanColTpl" var="status">
+   <vlayout hflex="1" droppable="true"
+            style="background:#ebedf0;border-radius:5px;margin-right:15px;padding:5px;min-width:280px;overflow-y:auto;"
+            onDrop="@command('onKanbanDropCmd', event=event, statusId=status.r_Status_ID)">
+    <hlayout hflex="1" valign="middle"
+             style="padding:5px;border-bottom:2px solid #ddd;" droppable="true">
+     <label value="@load(status.name)"
+            style="font-weight:bold;font-size:14px;" />
+     <label value="@load(vm.getKanbanCountForStatus(status.value))"
+            style="margin-left:6px;font-size:12px;color:#666;" />
+    </hlayout>
+    <listbox model="@load(vm.getKanbanRowsForStatus(status.value))"
+             hflex="1" oddRowSclass="non-odd"
+             style="background:transparent;border:none;"
+             droppable="true"
+             onDrop="@command('onKanbanDropCmd', event=event, statusId=status.r_Status_ID)">
+     <template name="model" var="row">
+      <listitem draggable="true"
+                onCreate="@command('initCard', component=self, requestId=row.requestId)"
+                onClick="@command('openRequestUpdate', requestId=row.requestId)">
+       <listcell>
+        <vlayout spacing="5px" style="@load(row.cardStyle)">
+         <label value="@load(row.summary)"
+                multiline="true" maxlength="100"
+                style="font-weight:500;font-size:13px;color:#333;" />
+         <hlayout hflex="1" valign="middle">
+          <label visible="@load(row.showCustomer)"
+                 value="@load(row.customer)"
+                 style="font-size:11px;color:#777;" />
+          <label visible="@load(row.showResponsible)"
+                 value="@load(row.responsible)"
+                 style="font-size:11px;color:#555;margin-left:10px;" />
+         </hlayout>
+         <hlayout hflex="1" valign="middle">
+          <label visible="@load(row.startDate ne null)"
+                 value="@load(row.startDateDisplay)"
+                 style="font-size:10px;color:#888;" />
+          <label visible="@load(row.showDueBadge)"
+                 value="@load(row.dueBadgeText)"
+                 style="@load(row.dueBadgeStyle)" />
+          <space hflex="1"/>
+          <label visible="@load(row.hasAttachment)"
+                 sclass="rk-icon-attach"
+                 style="display:inline-block;" />
+         </hlayout>
+        </vlayout>
+       </listcell>
+      </listitem>
+     </template>
+    </listbox>
+    <!-- "Add card" button only in first column; passes status.value (String) to avoid
+         object ref-equality issues across MVVM re-render cycles -->
+    <button visible="@load(vm.isFirstStatus(status.value))"
+            label="@load(vm.labelNewRequest)"
+            sclass="rk-add-card-btn"
+            onClick="@command('openNewRequest')" />
+   </vlayout>
+  </template>
+
+  <template name="listTabTpl" var="status">
+   <button label="@load(vm.getListTabLabel(status))"
+           sclass="@load(vm.getListTabSclass(status.value))"
+           onClick="@command('setListStatus', statusValue=status.value)"/>
+  </template>
+
+  <!-- Top Bar -->
+  <hlayout valign="middle" spacing="10px" hflex="1"
+           style="padding:10px;background:#f5f5f5;border-bottom:1px solid #ddd;">
+
+   <!-- Toggle View Button -->
+   <button label="@load(vm.toggleViewLabel)"
+           iconSclass="@load(vm.toggleViewIconSclass)"
+           onClick="@command('toggleView')" />
+
+   <!-- New Request Button -->
+   <button label="@load(vm.labelNewRequest)"
+           iconSclass="rk-icon-add"
+           sclass="btn-primary"
+           onClick="@command('openNewRequest')" />
+
+   <separator orient="vertical" bar="true"/>
+
+   <!-- Scope Pills -->
+   <hlayout spacing="4px" valign="middle">
+    <button label="@load(vm.labelPrivate)"
+            sclass="@load(vm.currentScope eq 'Private' ? 'rk-pill rk-pill-active' : 'rk-pill')"
+            onClick="@command('setScope', scope='Private')" />
+    <button label="@load(vm.labelSubordinates)"
+            sclass="@load(vm.currentScope eq 'Subordinates' ? 'rk-pill rk-pill-active' : 'rk-pill')"
+            onClick="@command('setScope', scope='Subordinates')" />
+    <button label="@load(vm.labelTeam)"
+            sclass="@load(vm.currentScope eq 'Team' ? 'rk-pill rk-pill-active' : 'rk-pill')"
+            onClick="@command('setScope', scope='Team')" />
+    <button label="@load(vm.labelAll)" visible="@load(vm.supervisor)"
+            sclass="@load(vm.currentScope eq 'All' ? 'rk-pill rk-pill-active' : 'rk-pill')"
+            onClick="@command('setScope', scope='All')" />
+   </hlayout>
+
+   <separator orient="vertical" bar="true"/>
+
+   <!-- Search -->
+   <textbox value="@bind(vm.searchFilter)"
+            placeholder="@load(vm.labelSearch)"
+            width="200px"
+            onOK="@command('search')" />
+
+   <space hflex="1"/>
+
+   <!-- Final Close checkbox (Gantt only) -->
+   <checkbox label="@load(vm.labelFinalClose)"
+             visible="@load(vm.ganttView)"
+             checked="@load(vm.showFinalClose)"
+             onCheck="@command('toggleFinalClose')" />
+
+   <!-- Version label -->
+   <label value="@load(vm.pluginVersion)"
+          style="color:#999;font-size:11px;font-weight:bold;margin-right:10px;" />
+  </hlayout>
+
+  <!-- ── Kanban View ─────────────────────────────────────────── -->
+  <!-- Outer div owns the visible binding — avoids "display:flex !important" on
+       the hlayout overriding ZK's "display:none" when kanbanView=false. -->
+  <div hflex="1" vflex="1" visible="@load(vm.kanbanView)">
+   <hlayout id="kanbanLayout" hflex="1" vflex="1"
+            sclass="rk-kanban-hlayout"
+            style="overflow-x:auto;padding:10px;"
+            children="@load(vm.visibleStatuses) @template('kanbanColTpl')">
+   </hlayout>
+  </div>
+
+  <!-- ── List View ───────────────────────────────────────────── -->
+  <!-- Note: tabbox/tabs children-binding rejected by ZK (Tabs enforces Tab-only children).
+       Using vlayout+groupbox per status instead.
+       Outer div owns visible binding (same pattern as kanban wrapper). -->
+  <div hflex="1" vflex="1" visible="@load(vm.listView)">
+   <!-- Tab bar: one pill-button per status -->
+   <hlayout spacing="6px"
+            style="padding:8px 10px;border-bottom:2px solid #e0e0e0;background:#fafafa;"
+            children="@load(vm.visibleStatuses) @template('listTabTpl')"/>
+   <!-- Single listbox showing selected tab's rows -->
+   <listbox model="@load(vm.selectedStatusRows)"
+            hflex="1" vflex="1" oddRowSclass="non-odd"
+            style="overflow:auto;">
+    <listhead>
+     <listheader label="@load(vm.labelDocNo)"     width="120px"/>
+     <listheader label="@load(vm.labelSummary)"/>
+     <listheader label="@load(vm.labelSalesRep)"  width="120px"/>
+     <listheader label="@load(vm.labelStartTime)" width="130px"/>
+     <listheader label="@load(vm.labelEndTime)"   width="130px"/>
+     <listheader label="@load(vm.labelPriority)"  width="80px"/>
+    </listhead>
+    <template name="model" var="row">
+     <listitem style="cursor:pointer;"
+               onClick="@command('openRequestUpdate', requestId=row.requestId)">
+      <listcell label="@load(row.documentNo)"       style="@load(row.listCellStyle)"/>
+      <listcell label="@load(row.summary)"          style="@load(row.listCellStyle)"/>
+      <listcell label="@load(row.responsible)"      style="@load(row.listCellStyle)"/>
+      <listcell label="@load(row.startDateDisplay)" style="@load(row.listCellStyle)"/>
+      <listcell style="@load(row.listCellStyle)">
+       <label value="@load(row.dueBadgeText)"
+              style="@load(row.dueBadgeStyle)"
+              visible="@load(row.showDueBadge)"/>
+      </listcell>
+      <listcell style="@load(row.priorityCellStyle)" label="@load(row.priority)"/>
+     </listitem>
+    </template>
+   </listbox>
+  </div>
+
+  <!-- ── Gantt View ──────────────────────────────────────────── -->
+  <!-- Outer div owns visible binding; inner div keeps display:flex for side-by-side
+       project panel + chart.  ZK sets display:none on the outer (no CSS conflict). -->
+  <div hflex="1" vflex="1" visible="@load(vm.ganttView)">
+   <div id="ganttLayout" hflex="1" vflex="1"
+        style="overflow:hidden;display:flex;">
+
+   <!-- Left: Project Panel -->
+   <div style="width:200px;overflow-y:auto;border-right:1px solid #ddd;padding:4px;">
+    <button label="@load(vm.labelNewProject)"
+            iconSclass="rk-icon-new-project"
+            style="width:100%;margin-bottom:4px;"
+            onClick="@command('openNewProjectDialog')" />
+    <div sclass="rk-project-panel"/>
+   </div>
+
+   <!-- Right: Gantt Chart + Controls -->
+   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;">
+    <!-- Gantt range controls -->
+    <hlayout spacing="4px" style="padding:6px;background:#f9f9f9;border-bottom:1px solid #eee;flex-shrink:0;">
+     <button label="Week"    onClick="@command('setGanttRange', range='week')"/>
+     <button label="Month"   onClick="@command('setGanttRange', range='month')"/>
+     <button label="Quarter" onClick="@command('setGanttRange', range='quarter')"/>
+     <datebox value="@bind(vm.ganttFromDate)"
+              format="yyyy/MM/dd" width="120px"
+              onChange="@command('ganttDateChange', from=event.value, to=vm.ganttToDate)"/>
+     <label value="–"/>
+     <datebox value="@bind(vm.ganttToDate)"
+              format="yyyy/MM/dd" width="120px"
+              onChange="@command('ganttDateChange', from=vm.ganttFromDate, to=event.value)"/>
+    </hlayout>
+    <div sclass="rk-gantt-container" style="flex:1;min-height:0;overflow:auto;"/>
+   </div>
+   </div><!-- /ganttLayout -->
+  </div><!-- /gantt wrapper -->
+
+ </window>
+</zk>

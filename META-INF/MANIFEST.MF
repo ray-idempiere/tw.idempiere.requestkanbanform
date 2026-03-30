@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Request Kanban Form
+Bundle-SymbolicName: tw.idempiere.requestkanbanform
+Bundle-Version: 0.0.3.qualifier
+Bundle-Vendor: Ray Lee
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-ActivationPolicy: lazy
+Bundle-ClassPath: .
+Service-Component: OSGI-INF/requestkanban_form_factory.xml
+Web-ContextPath: /requestkanbanform
+Require-Bundle: 
+ org.adempiere.base,
+ org.adempiere.ui.zk,
+ zul,
+ zk,
+ zkbind,
+ zcommon
+Import-Package: org.osgi.framework,
+ org.osgi.service.cm,
+ org.osgi.service.event
+Automatic-Module-Name: tw.idempiere.requestkanbanform
+AdempierePack-Dir: META-INF/2Pack
