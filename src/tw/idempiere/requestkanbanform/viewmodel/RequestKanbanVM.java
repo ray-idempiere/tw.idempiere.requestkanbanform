@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -25,6 +26,8 @@ import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.editor.WEditor;
 import org.compiere.model.MQuery;
+import org.compiere.model.MAttachment;
+import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MRequest;
 import org.compiere.model.MStatus;
 import org.compiere.model.MSysConfig;
@@ -73,6 +76,9 @@ public class RequestKanbanVM {
     private Map<String, List<KanbanRowModel>> kanbanRows = new LinkedHashMap<>();
     private List<MStatus> visibleStatuses = new ArrayList<>();
 
+    // R_Status icon URLs (Base64 data URIs), keyed by R_Status_ID
+    private Map<Integer, String> statusIconUrls = new HashMap<>();
+
     // List view selected tab (status value); null = use first visible status
     private String selectedListStatus = null;
 
@@ -94,8 +100,57 @@ public class RequestKanbanVM {
         injectPulseAnimation();
         statuses = getRequestStatus();
         rebuildVisibleStatuses();
+        loadStatusIcons();
         refreshKanbanData();
         this.supervisorFlag = checkIsSupervisor();
+    }
+
+    /**
+     * For each visible MStatus, look up its AD_Attachment (AD_Table_ID=776).
+     * If the first image entry is found, cache a Base64 data URI in statusIconUrls.
+     */
+    private void loadStatusIcons() {
+        statusIconUrls.clear();
+        Properties ctx = Env.getCtx();
+        final int R_STATUS_TABLE_ID = 776;
+        for (MStatus s : statuses) {
+            int statusId = s.getR_Status_ID();
+            try (MAttachment att = MAttachment.get(ctx, R_STATUS_TABLE_ID, statusId)) {
+                if (att == null) continue;
+                MAttachmentEntry[] entries = att.getEntries();
+                if (entries == null) continue;
+                for (MAttachmentEntry entry : entries) {
+                    if (entry != null && entry.isGraphic()) {
+                        byte[] data = entry.getData();
+                        if (data != null && data.length > 0) {
+                            String contentType = entry.getContentType();
+                            if (contentType == null || contentType.isBlank())
+                                contentType = "image/png";
+                            String b64 = Base64.getEncoder().encodeToString(data);
+                            statusIconUrls.put(statusId, "data:" + contentType + ";base64," + b64);
+                        }
+                        break; // use only the first image
+                    }
+                }
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "loadStatusIcons: failed for R_Status_ID=" + statusId, ex);
+            }
+        }
+    }
+
+    /**
+     * Returns the Base64 data URI for the icon of the given R_Status_ID,
+     * or null if no image attachment exists.
+     */
+    public String getStatusIconUrl(int r_Status_ID) {
+        return statusIconUrls.get(r_Status_ID);
+    }
+
+    /**
+     * Returns true if the given R_Status_ID has an image attachment to use as icon.
+     */
+    public boolean hasStatusIcon(int r_Status_ID) {
+        return statusIconUrls.containsKey(r_Status_ID);
     }
 
     private void loadStatusConfig() {
