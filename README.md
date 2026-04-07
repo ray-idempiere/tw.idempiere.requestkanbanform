@@ -75,7 +75,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 | Item | Detail |
 |------|--------|
 | OSGi Bundle ID | `tw.idempiere.requestkanbanform` |
-| Entry Point ZUL | `/requestkanbanform/zul/RequestKanbanForm.zul` |
+| Entry Point Class | `tw.idempiere.requestkanbanform.RequestKanbanForm` |
 | Main ViewModel | `RequestKanbanVM` |
 | Main Form | `RequestKanbanForm` |
 | Architecture | ZK MVVM (`@id`/`@init`/`@load`/`@command`) |
@@ -214,7 +214,7 @@ GPL-2.0-only. Share and share alike.
 | 項目 | 說明 |
 |------|------|
 | OSGi Bundle ID | `tw.idempiere.requestkanbanform` |
-| 入口 ZUL | `/requestkanbanform/zul/RequestKanbanForm.zul` |
+| 入口 classname | `tw.idempiere.requestkanbanform.RequestKanbanForm` |
 | ViewModel | `RequestKanbanVM`（純 POJO，無 ZK Component 參考） |
 | Form | `RequestKanbanForm`（ZK 配線、對話框開啟） |
 | 架構模式 | ZK MVVM |
