@@ -459,7 +459,7 @@ public class RequestKanbanVM {
 
     public void saveNewRequest(WEditor fUser, WEditor fDoc, WEditor fPriority,
                                WEditor fDepart, WEditor fSalesRep, WEditor fRole,
-                               String summary) {
+                               WEditor fProject, String summary) {
         Properties ctx = Env.getCtx();
         MRequest req = new MRequest(ctx, 0, null);
 
@@ -496,6 +496,11 @@ public class RequestKanbanVM {
         Object roleId = fRole.getValue();
         if (roleId instanceof Number)
             req.set_ValueOfColumn("AD_Role_ID", ((Number) roleId).intValue());
+
+        // Project (optional)
+        Object projId = fProject.getValue();
+        if (projId instanceof Number)
+            req.setC_Project_ID(((Number) projId).intValue());
 
         // Summary — required; abort with message if blank
         if (summary == null || summary.trim().isEmpty()) {

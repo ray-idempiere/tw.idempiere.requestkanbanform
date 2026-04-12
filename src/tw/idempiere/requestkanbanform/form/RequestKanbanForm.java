@@ -80,6 +80,7 @@ public class RequestKanbanForm extends ADForm
     private WSearchEditor    fRole;
     private WTableDirEditor  fDepart;
     private WSearchEditor    fSalesRep;
+    private WSearchEditor    fProject;
 
     // Update dialog editors (re-created each time the dialog opens)
     private WTableDirEditor  fUpdatePriority;
@@ -416,6 +417,10 @@ public class RequestKanbanForm extends ADForm
         fRole = new WSearchEditor("AD_Role_ID", false, false, true, roleL);
         fRole.setValue(1000088);
 
+        int projColId = MColumn.getColumn_ID("R_Request", "C_Project_ID");
+        MLookup projL = MLookupFactory.get(Env.getCtx(), 0, 0, projColId, DisplayType.Search);
+        fProject = new WSearchEditor("C_Project_ID", false, false, false, projL);
+
         // Assemble label+editor grid (matches reference dashboard layout)
         Grid grid = new Grid();
         grid.setHflex("1");
@@ -434,6 +439,7 @@ public class RequestKanbanForm extends ADForm
         rows.appendChild(makeRow("Type:",              fDoc.getComponent()));
         rows.appendChild(makeRow("Sales Rep:",         fSalesRep.getComponent()));
         rows.appendChild(makeRow("Responsible Role/Team:", fRole.getComponent()));
+        rows.appendChild(makeRow("Project:",           fProject.getComponent()));
         grid.appendChild(rows);
 
         container.appendChild(grid);
@@ -457,7 +463,7 @@ public class RequestKanbanForm extends ADForm
         if (btnCancel != null) btnCancel.addEventListener(Events.ON_CLICK, e -> dialog.detach());
         if (btnSave != null) btnSave.addEventListener(Events.ON_CLICK, e -> {
             String summary = txtSummary != null ? txtSummary.getValue().trim() : "";
-            vm.saveNewRequest(fUser, fDoc, fPriority, fDepart, fSalesRep, fRole, summary);
+            vm.saveNewRequest(fUser, fDoc, fPriority, fDepart, fSalesRep, fRole, fProject, summary);
             dialog.detach();
         });
     }
