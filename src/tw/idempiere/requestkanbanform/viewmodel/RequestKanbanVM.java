@@ -115,7 +115,8 @@ public class RequestKanbanVM {
         final int R_STATUS_TABLE_ID = 776;
         for (MStatus s : statuses) {
             int statusId = s.getR_Status_ID();
-            try (MAttachment att = MAttachment.get(ctx, R_STATUS_TABLE_ID, statusId)) {
+            try {
+                MAttachment att = MAttachment.get(ctx, R_STATUS_TABLE_ID, statusId);
                 if (att == null) continue;
                 MAttachmentEntry[] entries = att.getEntries();
                 if (entries == null) continue;

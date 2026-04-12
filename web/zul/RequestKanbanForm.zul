@@ -260,11 +260,11 @@
      <button label="Quarter" onClick="@command('setGanttRange', range='quarter')"/>
      <datebox value="@bind(vm.ganttFromDate)"
               format="yyyy/MM/dd" width="120px"
-              onChange="@command('ganttDateChange', from=event.value, to=vm.ganttToDate)"/>
+              onChange="@command('ganttDateChange', from=self.value, to=vm.ganttToDate)"/>
      <label value="–"/>
      <datebox value="@bind(vm.ganttToDate)"
               format="yyyy/MM/dd" width="120px"
-              onChange="@command('ganttDateChange', from=vm.ganttFromDate, to=event.value)"/>
+              onChange="@command('ganttDateChange', from=vm.ganttFromDate, to=self.value)"/>
     </hlayout>
     <div sclass="rk-gantt-container" style="flex:1;min-height:0;overflow:auto;"/>
    </div>
