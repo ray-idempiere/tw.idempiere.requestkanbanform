@@ -986,18 +986,29 @@ public class RequestKanbanVM {
             for (int i = 0; i < cachedProjects.size(); i++) {
                 int projectId = cachedProjects.get(i)[0];
                 String name   = cachedProjectNames.get(i);
+                int count = cachedProjectCounts.getOrDefault(projectId, 0);
                 sb.append("<div")
                   .append(" id=\"proj-").append(projectId).append("\"")
                   .append(" ondragover=\"event.preventDefault();this.style.background='#dbeafe';\"")
                   .append(" ondragleave=\"this.style.background='';\"")
                   .append(" ondrop=\"event.preventDefault();this.style.background='';window._zkGanttDrop(event,").append(projectId).append(");\"")
                   .append(" ondblclick=\"window._zkGanttProjectDblClick(").append(projectId).append(");\"")
-                  .append(" style=\"padding:6px 10px;font-size:12px;cursor:pointer;border-radius:4px;")
-                  .append("border:1px solid #e0e0e0;margin-bottom:4px;background:#fff;")
-                  .append("white-space:nowrap;overflow:hidden;text-overflow:ellipsis;\"")
+                  .append(" style=\"display:flex;align-items:center;justify-content:space-between;")
+                  .append("padding:6px 10px;font-size:12px;cursor:pointer;border-radius:4px;")
+                  .append("border:1px solid #e0e0e0;margin-bottom:4px;background:#fff;overflow:hidden;\"")
                   .append(" title=\"").append(escHtml(name)).append("\">")
+                  .append("<span style=\"min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;\">")
                   .append("📁 ").append(escHtml(name))
-                  .append("</div>");
+                  .append("</span>");
+                if (count > 0) {
+                    sb.append("<span style=\"box-sizing:border-box;background:#0052cc;color:#fff;border-radius:10px;")
+                      .append("min-width:18px;height:18px;font-size:10px;display:flex;")
+                      .append("align-items:center;justify-content:center;")
+                      .append("padding:0 4px;flex-shrink:0;margin-left:4px;\">")
+                      .append(count)
+                      .append("</span>");
+                }
+                sb.append("</div>");
             }
         }
         sb.append("</div>");
