@@ -91,6 +91,7 @@ public class RequestKanbanVM {
     // Project panel (Gantt left sidebar)
     private List<int[]>  cachedProjects     = new ArrayList<>();
     private List<String> cachedProjectNames = new ArrayList<>();
+    private Map<Integer, Integer> cachedProjectCounts = new HashMap<>();
 
     // ── Init ─────────────────────────────────────────────────────────────────
 
@@ -889,6 +890,85 @@ public class RequestKanbanVM {
             }
         } catch (Exception ex) {
             logger.log(Level.WARNING, "loadProjectList failed", ex);
+        } finally {
+            DB.close(rs, pstmt);
+        }
+        loadProjectRequestCounts();
+    }
+
+    /**
+     * Loads active request counts per project for the current scope into cachedProjectCounts.
+     * Called at the end of loadProjectList().
+     */
+    private void loadProjectRequestCounts() {
+        cachedProjectCounts.clear();
+        Properties ctx = Env.getCtx();
+        int userId = Env.getAD_User_ID(ctx);
+        String ss = currentScope;
+
+        // Subordinates: resolve list first; if empty, all counts are 0
+        List<Integer> subs = null;
+        if ("Subordinates".equals(ss)) {
+            subs = getSubordinateIds(userId);
+            if (subs.isEmpty()) {
+                logger.log(Level.FINE, "loadProjectRequestCounts: no subordinates for user {0}", userId);
+                return;
+            }
+        }
+
+        StringBuilder sql = new StringBuilder(
+            "SELECT C_Project_ID, COUNT(*) " +
+            "FROM R_Request r " +
+            "WHERE r.AD_Client_ID = ? " +
+            "  AND C_Project_ID IS NOT NULL " +
+            "  AND r.IsActive = 'Y' " +
+            "  AND EXISTS (SELECT 1 FROM R_Status WHERE R_Status_ID = r.R_Status_ID" +
+            "              AND IsFinalClose != 'Y')"
+        );
+
+        switch (ss) {
+            case "Private":
+                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?)");
+                break;
+            case "Subordinates":
+                String inClause = subs.stream().map(String::valueOf)
+                                      .collect(Collectors.joining(","));
+                sql.append(" AND (r.AD_User_ID IN (").append(inClause)
+                   .append(") OR r.SalesRep_ID IN (").append(inClause).append("))");
+                break;
+            case "Team":
+                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?")
+                   .append(" OR EXISTS (SELECT 1 FROM AD_User_Roles")
+                   .append(" WHERE AD_Role_ID = r.AD_Role_ID AND AD_User_ID = ")
+                   .append(userId).append("))");
+                break;
+            case "All":
+            default:
+                sql.append(" AND ? = ?");
+                break;
+        }
+
+        sql.append(" GROUP BY C_Project_ID");
+
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            pstmt = DB.prepareStatement(sql.toString(), null);
+            int idx = 1;
+            pstmt.setInt(idx++, Env.getAD_Client_ID(ctx));
+            if ("All".equals(ss)) {
+                pstmt.setInt(idx++, 1);
+                pstmt.setInt(idx++, 1);
+            } else if (!"Subordinates".equals(ss)) {
+                pstmt.setInt(idx++, userId);
+                pstmt.setInt(idx++, userId);
+            }
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                cachedProjectCounts.put(rs.getInt(1), rs.getInt(2));
+            }
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "loadProjectRequestCounts failed", ex);
         } finally {
             DB.close(rs, pstmt);
         }
