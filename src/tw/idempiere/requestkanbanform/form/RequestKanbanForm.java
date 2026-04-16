@@ -582,11 +582,23 @@ public class RequestKanbanForm extends ADForm
                 openRequestUpdateDialog(((Number) ev.getData()).intValue());
         });
         ganttLayout.addEventListener("onGanttProjectOpen", ev -> {
-            int projectId = Integer.parseInt(String.valueOf(ev.getData()));
-            org.compiere.model.MQuery query =
-                org.compiere.model.MQuery.getEqualQuery("C_Project_ID", projectId);
-            org.adempiere.webui.apps.AEnv.zoom(
-                org.compiere.model.MProject.Table_ID, query);
+            if (!(ev.getData() instanceof Number)) return;
+            int projectId = ((Number) ev.getData()).intValue();
+            int windowId = DB.getSQLValue(null,
+                "SELECT w.AD_Window_ID FROM AD_Window w " +
+                "JOIN AD_Tab t ON t.AD_Window_ID = w.AD_Window_ID " +
+                "WHERE t.AD_Table_ID = ? AND w.IsActive = 'Y' AND t.IsActive = 'Y' " +
+                "AND t.TabLevel = 0 " +
+                "ORDER BY w.AD_Client_ID DESC, t.SeqNo " +
+                "LIMIT 1",
+                org.compiere.model.MProject.Table_ID);
+            if (windowId > 0) {
+                org.compiere.model.MQuery query =
+                    org.compiere.model.MQuery.getEqualQuery("C_Project_ID", projectId);
+                org.adempiere.webui.apps.AEnv.zoom(windowId, query);
+            } else {
+                log.warning("onGanttProjectOpen: no window found for C_Project table");
+            }
         });
         ganttLayout.addEventListener("onGanttDrop", ev -> {
             if (!(ev.getData() instanceof java.util.Map)) return;
