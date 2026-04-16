@@ -921,10 +921,12 @@ public class RequestKanbanVM {
             "FROM R_Request r " +
             "WHERE r.AD_Client_ID = ? " +
             "  AND C_Project_ID IS NOT NULL " +
-            "  AND r.IsActive = 'Y' " +
-            "  AND EXISTS (SELECT 1 FROM R_Status WHERE R_Status_ID = r.R_Status_ID" +
-            "              AND IsFinalClose != 'Y')"
+            "  AND r.IsActive = 'Y'"
         );
+        if (!showFinalClose) {
+            sql.append("  AND EXISTS (SELECT 1 FROM R_Status WHERE R_Status_ID = r.R_Status_ID" +
+                       "              AND IsFinalClose != 'Y')");
+        }
 
         switch (ss) {
             case "Private":
