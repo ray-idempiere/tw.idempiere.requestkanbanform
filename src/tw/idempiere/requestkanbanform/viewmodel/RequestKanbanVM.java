@@ -22,6 +22,7 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import org.adempiere.base.event.EventManager;
 import org.adempiere.exceptions.AdempiereException;
 import org.adempiere.webui.apps.AEnv;
 import org.adempiere.webui.editor.WEditor;
@@ -61,6 +62,8 @@ public class RequestKanbanVM {
     public static final String VIEW_KANBAN = "Kanban";
     public static final String VIEW_LIST   = "List";
     public static final String VIEW_GANTT  = "gantt";
+
+    public static final String TOPIC_KANBAN_REFRESH = "kanbanform/request/refresh";
 
     // ── Form reference (set by RequestKanbanForm after init) ─────────────────
     private RequestKanbanForm form;
@@ -390,6 +393,7 @@ public class RequestKanbanVM {
                 Clients.NOTIFICATION_TYPE_ERROR, null, null, 3000);
             return;
         }
+        broadcastRefresh();
         refreshKanbanData();
         BindUtils.postNotifyChange(this, "*");
     }
@@ -524,6 +528,7 @@ public class RequestKanbanVM {
                 Clients.NOTIFICATION_TYPE_ERROR, null, null, 3000);
             return;
         }
+        broadcastRefresh();
         refreshKanbanData();
         BindUtils.postNotifyChange(this, "*");
     }
@@ -569,6 +574,7 @@ public class RequestKanbanVM {
                 Clients.NOTIFICATION_TYPE_ERROR, null, null, 3000);
             return;
         }
+        broadcastRefresh();
         refreshKanbanData();
         BindUtils.postNotifyChange(this, "*");
     }
@@ -594,7 +600,7 @@ public class RequestKanbanVM {
     // ── Data loading ──────────────────────────────────────────────────────────
 
     /** Refreshes whichever view is currently active. */
-    private void refreshCurrentView() {
+    public void refreshCurrentView() {
         if (VIEW_GANTT.equals(currentView)) {
             refreshGanttHtml();
             refreshProjectPanel();
@@ -1067,6 +1073,20 @@ public class RequestKanbanVM {
     public boolean isMySubordinate(int ad_User_ID) {
         int myId = Env.getAD_User_ID(Env.getCtx());
         return getSubordinateIds(myId).contains(ad_User_ID);
+    }
+
+    public void broadcastRefresh() {
+        // postEvent is async — handler runs on OSGi thread (not ZK request thread),
+        // so Executions.schedule() in the subscriber works correctly for other browsers.
+        EventManager.getInstance().postEvent(
+            new org.osgi.service.event.Event(TOPIC_KANBAN_REFRESH, new java.util.HashMap<>()));
+    }
+
+    public boolean isSupervisorOf(int adUserId) {
+        int myId = Env.getAD_User_ID(Env.getCtx());
+        int supervisorId = DB.getSQLValue(null,
+            "SELECT supervisor_id FROM ad_user WHERE ad_user_id = ?", adUserId);
+        return supervisorId == myId;
     }
 
     public int getSalesRepByRequestType(int R_RequestType_ID) {
