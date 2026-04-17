@@ -7,14 +7,13 @@ package tw.idempiere.requestkanbanform.form;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
-import java.util.Dictionary;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.adempiere.base.event.EventManager;
 import org.adempiere.webui.editor.WSearchEditor;
 import org.adempiere.webui.editor.WTableDirEditor;
 import org.adempiere.webui.event.ValueChangeEvent;
@@ -32,9 +31,6 @@ import org.compiere.util.DB;
 import org.compiere.util.DisplayType;
 import org.compiere.util.Env;
 import org.compiere.util.Msg;
-import org.osgi.framework.FrameworkUtil;
-import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.zkoss.zk.ui.Component;
 import org.zkoss.zk.ui.Page;
@@ -66,7 +62,7 @@ import org.zkoss.zul.Window;
 import tw.idempiere.requestkanbanform.viewmodel.RequestKanbanVM;
 
 public class RequestKanbanForm extends ADForm
-        implements IFormController, ValueChangeListener, EventHandler {
+        implements IFormController, ValueChangeListener {
 
     private static final long serialVersionUID = 1L;
     private static final Logger log = Logger.getLogger(RequestKanbanForm.class.getName());
@@ -91,8 +87,9 @@ public class RequestKanbanForm extends ADForm
     private Textbox          fUpdateResult;
     private Doublespinner    fSpinnerQuantity;
 
-    // OSGi event handler
-    private ServiceRegistration<EventHandler> m_reg;
+    // Cross-session real-time refresh (article pattern: capture desktop at init)
+    private Desktop myDesktop;
+    private EventHandler eventSubscriber;
 
     // Gantt bridge — initialized lazily on first switch to Gantt view
     private boolean ganttBridgeReady = false;
@@ -112,6 +109,11 @@ public class RequestKanbanForm extends ADForm
 
             Executions.createComponents("~./zul/RequestKanbanForm.zul", this, null);
             Selectors.wireComponents(this, this, false);
+
+            // Capture desktop reference now (article pattern: must be done
+            // in ZK thread, not inside the OSGi event handler thread).
+            myDesktop = Executions.getCurrent().getDesktop();
+            if (!myDesktop.isServerPushEnabled()) myDesktop.enableServerPush(true);
 
             // NOTE: setupGanttBridge() is NOT called here.
             // It is called lazily via ensureGanttBridge() when the user first
@@ -137,39 +139,41 @@ public class RequestKanbanForm extends ADForm
         dialog.setTitle(Msg.getMsg(Env.getCtx(), "RK_RequestFormTitle") + " — #" + request.getDocumentNo());
 
         boolean canEdit = vm.canEditRequest(request);
+        boolean isSupervisor = vm.isSupervisorOf(request.getAD_User_ID());
+        boolean canEditAny = canEdit || isSupervisor;
 
         // ── 📋 Basic Info ─────────────────────────────────────────
         Label sec1 = new Label("📋 " + Msg.getMsg(Env.getCtx(), "RK_BasicInfo"));
         sec1.setStyle("font-size:11px;font-weight:700;color:#888;letter-spacing:0.5px;margin:10px 0 6px;");
         requestDoc.appendChild(sec1);
 
-        // Priority
+        // Priority — only supervisor can edit
         MLookup priorityL = MLookupFactory.get(Env.getCtx(), 0, 0, 5426, DisplayType.List);
         fUpdatePriority = new WTableDirEditor("Priority", false, false, true, priorityL);
         fUpdatePriority.setMandatory(true);
         fUpdatePriority.setValue(request.getPriority());
-        fUpdatePriority.setReadWrite(canEdit);
+        fUpdatePriority.setReadWrite(isSupervisor);
         requestDoc.appendChild(makeFieldRow(Msg.getMsg(Env.getCtx(), "RK_Priority"), fUpdatePriority.getComponent()));
 
-        // SalesRep
+        // SalesRep — supervisor or canEdit
         MLookup srL = MLookupFactory.get(Env.getCtx(), 0, 0, 5432, DisplayType.Search);
         fUpdateSalesRep = new WSearchEditor("SalesRep_ID", false, false, true, srL);
         fUpdateSalesRep.setValue(request.getSalesRep_ID());
-        fUpdateSalesRep.setReadWrite(canEdit);
+        fUpdateSalesRep.setReadWrite(canEditAny);
         requestDoc.appendChild(makeFieldRow(Msg.getMsg(Env.getCtx(), "RK_SalesRep"), fUpdateSalesRep.getComponent()));
 
-        // StartTime / EndTime
+        // StartTime / EndTime — supervisor or canEdit
         fStartTime = new Datebox();
         fStartTime.setHflex("1");
         fStartTime.setFormat("yyyy-MM-dd HH:mm");
         if (request.getStartTime() != null) fStartTime.setValue(request.getStartTime());
-        fStartTime.setDisabled(!canEdit);
+        fStartTime.setDisabled(!canEditAny);
 
         fEndTime = new Datebox();
         fEndTime.setHflex("1");
         fEndTime.setFormat("yyyy-MM-dd HH:mm");
         if (request.getEndTime() != null) fEndTime.setValue(request.getEndTime());
-        fEndTime.setDisabled(!canEdit);
+        fEndTime.setDisabled(!canEditAny);
 
         Hlayout timeRow = new Hlayout();
         timeRow.setHflex("1");
@@ -280,11 +284,11 @@ public class RequestKanbanForm extends ADForm
         fUpdateResult.setRows(3);
         fUpdateResult.setMultiline(true);
         fUpdateResult.setHflex("1");
-        fUpdateResult.setReadonly(!canEdit);
+        fUpdateResult.setReadonly(!canEditAny);
         requestDoc.appendChild(fUpdateResult);
 
-        // Product / Quantity (only when canEdit)
-        if (canEdit) {
+        // Product / Quantity (only when canEditAny)
+        if (canEditAny) {
             MLookup productL = MLookupFactory.get(Env.getCtx(), 0, 0, 13497, DisplayType.Search);
             fProductSpent = new WSearchEditor("M_ProductSpent_ID", false, false, true, productL);
             fProductSpent.setValue(MColumn.get(Env.getCtx(), 13497).getDefaultValue());
@@ -301,7 +305,7 @@ public class RequestKanbanForm extends ADForm
         // ── Buttons ───────────────────────────────────────────────
         Button btnSave = (Button) dialog.getFellow("closeBtn");
         btnSave.setLabel(Msg.getMsg(Env.getCtx(), "RK_SaveAndClose"));
-        btnSave.setDisabled(!canEdit);
+        btnSave.setDisabled(!canEditAny);
         btnSave.addEventListener(Events.ON_CLICK, e -> {
             if (fUpdatePriority.getValue() == null) {
                 Clients.showNotification(Msg.getMsg(Env.getCtx(), "RK_PriorityMandatory"));
@@ -336,11 +340,12 @@ public class RequestKanbanForm extends ADForm
                 request.setSalesRep_ID((int) fUpdateSalesRep.getValue());
                 anyChange = true;
             }
-            if (anyChange) request.save();
+            if (anyChange) {
+                request.save();
+                vm.broadcastRefresh();
+            }
             dialog.detach();
-            vm.refreshGanttHtml();
-            vm.refreshKanbanData();
-            org.zkoss.bind.BindUtils.postNotifyChange(vm, "*");
+            vm.refreshCurrentView();
         });
 
         Button btnZoom = (Button) dialog.getFellow("zoomBtn");
@@ -613,32 +618,33 @@ public class RequestKanbanForm extends ADForm
     }
 
     private void registerOsgiEventHandler() {
-        Dictionary<String, Object> props = new Hashtable<>();
-        props.put(EventConstants.EVENT_TOPIC, new String[]{
-            "org/compiere/model/R_Request/*",
-            "org/compiere/model/R_RequestUpdate/*",
-            "org/compiere/model/AD_Attachment/*"
-        });
-        m_reg = FrameworkUtil.getBundle(getClass()).getBundleContext()
-                    .registerService(EventHandler.class, this, props);
+        eventSubscriber = osgiEvent -> {
+            if (myDesktop == null || !myDesktop.isAlive()) return;
+            try {
+                Executions.schedule(myDesktop,
+                    e -> vm.refreshCurrentView(),
+                    new Event("onServerPushRefresh"));
+            } catch (Exception ex) {
+                log.log(Level.WARNING, "Kanban refresh schedule failed", ex);
+            }
+        };
+        // postEvent (async) ensures handler runs on OSGi thread, not ZK request thread,
+        // so Executions.schedule() correctly triggers server push for this desktop.
+        EventManager.getInstance().register(RequestKanbanVM.TOPIC_KANBAN_REFRESH, eventSubscriber);
     }
 
     @Override
-    public void handleEvent(org.osgi.service.event.Event event) {
-        Desktop desktop = this.getDesktop();
-        if (desktop == null) return;
-        if (!desktop.isServerPushEnabled()) desktop.enableServerPush(true);
-        Executions.schedule(desktop, e -> {
-            vm.refreshKanbanData();
-            org.zkoss.bind.BindUtils.postNotifyChange(vm, "*");
-        }, new Event("onServerPushRefresh"));
+    public void onPageAttached(Page newpage, Page oldpage) {
+        super.onPageAttached(newpage, oldpage);
+        if (newpage != null && !newpage.getDesktop().isServerPushEnabled())
+            newpage.getDesktop().enableServerPush(true);
     }
 
     @Override
     public void onPageDetached(Page page) {
-        if (m_reg != null) {
-            m_reg.unregister();
-            m_reg = null;
+        if (eventSubscriber != null) {
+            EventManager.getInstance().unregister(eventSubscriber);
+            eventSubscriber = null;
         }
         super.onPageDetached(page);
     }
