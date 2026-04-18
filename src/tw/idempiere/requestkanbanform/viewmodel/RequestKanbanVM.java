@@ -553,6 +553,7 @@ public class RequestKanbanVM {
                 Clients.NOTIFICATION_TYPE_ERROR, null, null, 3000);
             return;
         }
+        broadcastRefresh();
         refreshProjectPanel();
     }
 
