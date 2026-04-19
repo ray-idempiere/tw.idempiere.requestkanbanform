@@ -1096,6 +1096,13 @@ public class RequestKanbanVM {
         return DB.getSQLValue(null, sql, R_RequestType_ID);
     }
 
+    public int getRoleByRequestType(int R_RequestType_ID) {
+        String sql = "SELECT r.ad_role_id FROM r_requesttype rt " +
+                     "JOIN ad_role r ON r.name = rt.description::json->>'Role' " +
+                     "WHERE rt.r_requesttype_id = ?";
+        return DB.getSQLValue(null, sql, R_RequestType_ID);
+    }
+
     public boolean isAttachment(int r_Request_ID) {
         String sql = "select count(*) from ad_attachment where ad_table_id = 417 and record_id = ?";
         return DB.getSQLValue(null, sql, r_Request_ID) > 0;
