@@ -117,6 +117,23 @@ When a user selects that Request Type in the New Request dialog, the **Responsib
 - **Auto-fill Role from Request Type** — `R_RequestType.Description` now accepts `{"Role":"<role name>"}` JSON. Selecting a Request Type in the New Request dialog automatically resolves the role name to an `AD_Role_ID` and populates the Responsible Role/Team field.
 - **Session role default** — The Responsible Role/Team field in the New Request dialog now defaults to the current user's login role instead of a hardcoded ID.
 
+#### 2026-04-18 — v2.1.2
+- **Gantt: drag request onto project** — Drag a request bar and drop it onto a project row to reassign; change is broadcast to all sessions in real time.
+- **Gantt: create / update project with push** — Creating or editing a project from the Gantt sidebar fires a broadcast refresh so all connected clients see the updated project list immediately.
+
+#### 2026-04-18 — v2.1.0
+- **Cross-session real-time refresh** — Switched from OSGi service registration to `EventManager.postEvent` so any edit in one browser session instantly refreshes all other open Kanban views via server push.
+- **Supervisor edit permissions** — Supervisors can now edit Priority, SalesRep, StartTime, EndTime, Result, and Product in the request dialog (previously restricted to the assignee only).
+- **`broadcastRefresh()`** — New VM method fires a topic event after any card move or status change, triggering a refresh across all sessions.
+
+#### 2026-04-16 — v2.0.3
+- **Double-click to zoom fix** — Fixed a bug where double-clicking a project folder in the Gantt view did not open the correct iDempiere Project window.
+- **Request counter badge** — Each project row in the Gantt panel now shows a scoped request count badge on the right side; respects the `showFinalClose` toggle.
+
+#### 2026-04-12 — v2.0.2
+- **Project selector in New Request dialog** — Users can now link a new request to a `C_Project` directly from the creation dialog.
+- **Gantt date-picker fix** — Resolved a crash when opening the date range picker in the Gantt view.
+
 #### 2026-04-05 — v2.0.0
 - **MVVM Rewrite** — Complete rewrite from Conductor-pattern (`DashboardRunComponent`) to ZK MVVM. `RequestKanbanVM` is a pure POJO ViewModel; `RequestKanbanForm` handles only ZK wiring. Zero component references in the VM.
 - **Maven / Tycho Build** — Migrated from Eclipse PDE-only to Maven Tycho build. `mvn package` now works.
@@ -267,6 +284,23 @@ GPL-2.0-only. Share and share alike.
 #### 2026-04-19 — v2.1.3
 - **依請求類型自動帶入負責角色** — `R_RequestType.Description` 支援 `{"Role":"<角色名稱>"}` JSON 格式。在新建請求對話框選擇請求類型時，自動將角色名稱解析為 `AD_Role_ID` 並填入負責角色/團隊欄位。
 - **登入角色預設值** — 新建請求對話框的負責角色/團隊欄位，現在改為預設帶入當前使用者的登入角色，取代原本的硬編碼 ID。
+
+#### 2026-04-18 — v2.1.2
+- **甘特圖：拖曳請求至專案** — 將請求長條拖放至專案列即可重新指派，異動即時廣播至所有連線工作階段。
+- **甘特圖：建立/更新專案含推播** — 從甘特圖側邊欄新建或編輯專案後，自動廣播刷新，所有連線用戶端立即看到最新專案列表。
+
+#### 2026-04-18 — v2.1.0
+- **跨工作階段即時刷新** — 改用 `EventManager.postEvent` 模式，任一瀏覽器工作階段的異動，即時透過 Server Push 刷新所有其他已開啟的看板視圖。
+- **主管編輯權限** — 主管現可在請求對話框編輯優先權、SalesRep、起訖時間、結果與產品（原僅限被指派人）。
+- **`broadcastRefresh()`** — 新 VM 方法，在卡片移動或狀態變更後觸發跨工作階段廣播刷新。
+
+#### 2026-04-16 — v2.0.3
+- **雙擊縮放修正** — 修正在甘特視圖雙擊專案資料夾無法正確開啟 iDempiere 專案視窗的問題。
+- **請求計數徽章** — 甘特圖每個專案列右側顯示範圍內的請求計數徽章，並遵循 `showFinalClose` 開關設定。
+
+#### 2026-04-12 — v2.0.2
+- **新建請求對話框加入專案選擇器** — 使用者可在新建請求時直接關聯 `C_Project`。
+- **甘特日期選擇器修正** — 修正甘特視圖開啟日期區間選擇器時發生崩潰的問題。
 
 #### 2026-04-05 — v2.0.0
 - **MVVM 全面改寫** — 從 Conductor 模式徹底重構為 ZK MVVM，`RequestKanbanVM` 為純 POJO ViewModel。
