@@ -83,7 +83,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 | New DB Columns | 0 |
 | iDempiere Version | 12 |
 | Build System | Maven (Tycho) |
-| Plugin Version | 2.1.3 |
+| Plugin Version | 2.2.0 |
 
 **Status Icon Resolution** — On form init, `loadStatusIcons()` iterates all `R_Status` records and calls `MAttachment.get(ctx, 776, statusId)`. If an image entry (`isGraphic()` → `.png/.jpg/.gif`) is found, it is encoded as a Base64 data URI and cached in memory. The ZUL binds `visible` and `src` to `hasStatusIcon()` / `getStatusIconUrl()` on the ViewModel. Size: 16×16 with `object-fit:contain`. See [`docs/technical-guide-status-icon.md`](docs/technical-guide-status-icon.md) for full details.
 
@@ -112,6 +112,12 @@ When a user selects that Request Type in the New Request dialog, the **Responsib
 ---
 
 ### 📋 Changelog
+
+#### 2026-04-19 — v2.2.0
+- **`MRequestKanban` custom model** — New `MRequest` subclass that implements a *beforeSave / afterSave sandwich* to preserve `EndTime` against erasure by iDempiere's core `RequestEventHandler`. `beforeSave` stashes the value before `PO_BEFORE_CHANGE` fires; `afterSave` restores it via direct SQL UPDATE after the event has completed, avoiding infinite recursion.
+- **`RequestKanbanModelFactory`** — New `IModelFactory` OSGi service (ranking 100) registered via `OSGI-INF/requestkanban_model_factory.xml`, ensuring iDempiere instantiates `MRequestKanban` instead of `MRequest` for all `R_Request` PO operations.
+- **`build.properties` fix** — `OSGI-INF/requestkanban_model_factory.xml` was missing from `bin.includes`; without this the OSGi component was never packaged and the factory service never registered.
+- **`RequestKanbanVM` model usage** — All five `new MRequest(...)` call sites replaced with `new MRequestKanban(...)` so that custom `beforeSave`/`afterSave` hooks are active for every save operation originating from the Kanban form.
 
 #### 2026-04-19 — v2.1.3
 - **Auto-fill Role from Request Type** — `R_RequestType.Description` now accepts `{"Role":"<role name>"}` JSON. Selecting a Request Type in the New Request dialog automatically resolves the role name to an `AD_Role_ID` and populates the Responsible Role/Team field.
@@ -157,17 +163,21 @@ When a user selects that Request Type in the New Request dialog, the **Responsib
 ```
 tw.idempiere.requestkanbanform/
 ├── src/tw/idempiere/requestkanbanform/
-│   ├── form/           RequestKanbanForm.java       (ZK wiring, dialog launchers)
-│   ├── viewmodel/      RequestKanbanVM.java          (MVVM ViewModel)
-│   ├── viewmodel/      KanbanRowModel.java           (immutable card model)
-│   ├── dashboard/      GanttRenderer.java            (Gantt HTML builder)
-│   ├── dashboard/      StatusConfig.java             (status filter config)
-│   └── factory/        RequestKanbanFormFactory.java (OSGi service registration)
-├── web/zul/            RequestKanbanForm.zul         (main MVVM view)
+│   ├── form/           RequestKanbanForm.java        (ZK wiring, dialog launchers)
+│   ├── viewmodel/      RequestKanbanVM.java           (MVVM ViewModel)
+│   ├── viewmodel/      KanbanRowModel.java            (immutable card model)
+│   ├── dashboard/      GanttRenderer.java             (Gantt HTML builder)
+│   ├── dashboard/      StatusConfig.java              (status filter config)
+│   ├── factory/        RequestKanbanFormFactory.java  (OSGi form service)
+│   ├── factory/        RequestKanbanModelFactory.java (OSGi IModelFactory — returns MRequestKanban)
+│   └── model/          MRequestKanban.java            (MRequest subclass, EndTime sandwich)
+├── web/zul/            RequestKanbanForm.zul          (main MVVM view)
 │                       request-new.zul / request-update.zul / project-new.zul
+├── OSGI-INF/           requestkanban_form_factory.xml / requestkanban_model_factory.xml
 ├── META-INF/           MANIFEST.MF, 2Pack/
 ├── migration/          i18n_setup.sql
 ├── docs/               technical-guide-status-icon.md
+│                       2026-04-19-idempiere-endtime-persistence-model-sandwich.md
 ├── pom.xml
 └── README.md
 ```
@@ -251,7 +261,7 @@ GPL-2.0-only. Share and share alike.
 | 新增欄位 | 0 |
 | iDempiere 版本 | 12 |
 | 建置工具 | Maven Tycho |
-| 外掛版本 | 2.1.3 |
+| 外掛版本 | 2.2.0 |
 
 **狀態 Icon 解析邏輯** — 表單 init 時，`loadStatusIcons()` 為每個 `R_Status_ID` 呼叫 `MAttachment.get(ctx, 776, statusId)`，找到第一個圖檔（`isGraphic()`）後轉為 Base64 data URI 快取。ZUL 透過 `hasStatusIcon()` / `getStatusIconUrl()` 綁定顯示，16×16，`object-fit:contain`。詳見 [技術文件](docs/technical-guide-status-icon.md)。
 
@@ -280,6 +290,12 @@ GPL-2.0-only. Share and share alike.
 ---
 
 ### 📋 更新記錄
+
+#### 2026-04-19 — v2.2.0
+- **`MRequestKanban` 自訂模型** — 繼承 `MRequest` 的子類別，實作 *beforeSave / afterSave 夾擊模式*，對抗 iDempiere 核心 `RequestEventHandler` 在 `PO_BEFORE_CHANGE` 事件中清除 `EndTime` 的行為。`beforeSave` 在事件觸發前暫存欄位值；`afterSave` 透過直接 SQL UPDATE 還原，避免無限迴圈。
+- **`RequestKanbanModelFactory`** — 新增 `IModelFactory` OSGi 服務（ranking 100），透過 `OSGI-INF/requestkanban_model_factory.xml` 註冊，確保所有 `R_Request` PO 操作均實例化 `MRequestKanban` 而非 `MRequest`。
+- **`build.properties` 修正** — `OSGI-INF/requestkanban_model_factory.xml` 未包含於 `bin.includes`；缺少此設定時 OSGi component 不會被打包，工廠服務永遠無法註冊。
+- **`RequestKanbanVM` 模型替換** — 將 VM 中五處 `new MRequest(...)` 全部改為 `new MRequestKanban(...)`，確保 Kanban 表單所有存檔操作均觸發自訂的 `beforeSave`/`afterSave` 邏輯。
 
 #### 2026-04-19 — v2.1.3
 - **依請求類型自動帶入負責角色** — `R_RequestType.Description` 支援 `{"Role":"<角色名稱>"}` JSON 格式。在新建請求對話框選擇請求類型時，自動將角色名稱解析為 `AD_Role_ID` 並填入負責角色/團隊欄位。
@@ -330,12 +346,16 @@ tw.idempiere.requestkanbanform/
 │   ├── viewmodel/      KanbanRowModel.java            (卡片不可變顯示模型)
 │   ├── dashboard/      GanttRenderer.java             (甘特 HTML 產生器)
 │   ├── dashboard/      StatusConfig.java              (狀態過濾設定)
-│   └── factory/        RequestKanbanFormFactory.java  (OSGi 服務註冊)
+│   ├── factory/        RequestKanbanFormFactory.java  (OSGi Form 服務)
+│   ├── factory/        RequestKanbanModelFactory.java (OSGi IModelFactory — 回傳 MRequestKanban)
+│   └── model/          MRequestKanban.java            (MRequest 子類別，EndTime 夾擊邏輯)
 ├── web/zul/            RequestKanbanForm.zul          (主 MVVM 視圖)
 │                       request-new.zul / request-update.zul / project-new.zul
+├── OSGI-INF/           requestkanban_form_factory.xml / requestkanban_model_factory.xml
 ├── META-INF/           MANIFEST.MF, 2Pack/
 ├── migration/          i18n_setup.sql
 ├── docs/               technical-guide-status-icon.md
+│                       2026-04-19-idempiere-endtime-persistence-model-sandwich.md
 ├── pom.xml
 └── README.md
 ```
