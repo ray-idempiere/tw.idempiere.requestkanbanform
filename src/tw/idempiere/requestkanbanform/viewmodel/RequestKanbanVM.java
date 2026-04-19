@@ -30,6 +30,7 @@ import org.compiere.model.MQuery;
 import org.compiere.model.MAttachment;
 import org.compiere.model.MAttachmentEntry;
 import org.compiere.model.MRequest;
+import tw.idempiere.requestkanbanform.model.MRequestKanban;
 import org.compiere.model.MStatus;
 import org.compiere.model.MSysConfig;
 import org.compiere.model.Query;
@@ -385,7 +386,7 @@ public class RequestKanbanVM {
     }
 
     public void onKanbanDrop(int requestId, int newStatusId) {
-        MRequest req = new MRequest(Env.getCtx(), requestId, null);
+        MRequestKanban req = new MRequestKanban(Env.getCtx(), requestId, null);
         if (req.getR_Request_ID() == 0) return;
         req.setR_Status_ID(newStatusId);
         if (!req.save()) {
@@ -423,7 +424,7 @@ public class RequestKanbanVM {
     }
 
     public void onGanttDrop(int requestId, int projectId) {
-        MRequest req = new MRequest(Env.getCtx(), requestId, null);
+        MRequestKanban req = new MRequestKanban(Env.getCtx(), requestId, null);
         if (req.getR_Request_ID() == 0) {
             Clients.showNotification(Msg.getMsg(Env.getCtx(), "RK_RequestNotFound"),
                 Clients.NOTIFICATION_TYPE_WARNING, null, null, 3000);
@@ -442,7 +443,7 @@ public class RequestKanbanVM {
 
     @Command
     public void openRequestZoom(@BindingParam("requestId") int requestId) {
-        MRequest req = new MRequest(Env.getCtx(), requestId, null);
+        MRequestKanban req = new MRequestKanban(Env.getCtx(), requestId, null);
         if (req.getR_Request_ID() == 0) return;
         MQuery query = MQuery.getEqualQuery("R_Request_ID", requestId);
         AEnv.zoom(417, query);
@@ -467,7 +468,7 @@ public class RequestKanbanVM {
                                WEditor fDepart, WEditor fSalesRep, WEditor fRole,
                                WEditor fProject, String summary) {
         Properties ctx = Env.getCtx();
-        MRequest req = new MRequest(ctx, 0, null);
+        MRequestKanban req = new MRequestKanban(ctx, 0, null);
 
         // Requester — set_ValueOfColumn avoids generated-setter silent guards
         Object userId = fUser.getValue();
@@ -560,7 +561,7 @@ public class RequestKanbanVM {
     public void saveRequestUpdate(int requestId, WEditor fPriority, WEditor fSalesRep,
                                   WEditor fProductSpent) {
         Properties ctx = Env.getCtx();
-        MRequest req = new MRequest(ctx, requestId, null);
+        MRequestKanban req = new MRequestKanban(ctx, requestId, null);
         if (req.getR_Request_ID() == 0) return;
 
         Object priority = fPriority.getValue();
