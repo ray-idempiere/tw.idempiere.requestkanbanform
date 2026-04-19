@@ -420,7 +420,7 @@ public class RequestKanbanForm extends ADForm
 
         MLookup roleL = MLookupFactory.get(Env.getCtx(), 0, 0, 13488, DisplayType.Search);
         fRole = new WSearchEditor("AD_Role_ID", false, false, true, roleL);
-        fRole.setValue(1000088);
+        fRole.setValue(Env.getAD_Role_ID(Env.getCtx()));
 
         int projColId = MColumn.getColumn_ID("R_Request", "C_Project_ID");
         MLookup projL = MLookupFactory.get(Env.getCtx(), 0, 0, projColId, DisplayType.Search);
@@ -656,6 +656,8 @@ public class RequestKanbanForm extends ADForm
             int salesRepId = vm.getSalesRepByRequestType(requestTypeId);
             if (fSalesRep != null) fSalesRep.setValue(salesRepId);
             if (fUpdateSalesRep != null) fUpdateSalesRep.setValue(salesRepId);
+            int roleId = vm.getRoleByRequestType(requestTypeId);
+            if (fRole != null && roleId > 0) fRole.setValue(roleId);
         }
     }
 
