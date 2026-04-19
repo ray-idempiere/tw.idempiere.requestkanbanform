@@ -101,9 +101,21 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 
 **Optional — Custom Status Icons**: Open the **Request Status** window, find a status record, attach a PNG/JPG/GIF image. On next Kanban page load, that image becomes the column header icon. See [Status Icon Guide](docs/technical-guide-status-icon.md).
 
+**Optional — Auto-fill Role by Request Type**: In the **Request Type** window, set the **Description** field to a JSON object specifying the responsible role:
+
+```json
+{"Role":"ERP Support"}
+```
+
+When a user selects that Request Type in the New Request dialog, the **Responsible Role/Team** field is automatically populated with the matching `AD_Role`. The role name must exactly match the `Name` field in the **Role** window. Leave the Description blank (or use any other format) to skip auto-fill.
+
 ---
 
 ### 📋 Changelog
+
+#### 2026-04-19 — v2.1.3
+- **Auto-fill Role from Request Type** — `R_RequestType.Description` now accepts `{"Role":"<role name>"}` JSON. Selecting a Request Type in the New Request dialog automatically resolves the role name to an `AD_Role_ID` and populates the Responsible Role/Team field.
+- **Session role default** — The Responsible Role/Team field in the New Request dialog now defaults to the current user's login role instead of a hardcoded ID.
 
 #### 2026-04-05 — v2.0.0
 - **MVVM Rewrite** — Complete rewrite from Conductor-pattern (`DashboardRunComponent`) to ZK MVVM. `RequestKanbanVM` is a pure POJO ViewModel; `RequestKanbanForm` handles only ZK wiring. Zero component references in the VM.
@@ -240,9 +252,21 @@ GPL-2.0-only. Share and share alike.
 
 **選用：自訂狀態 Icon** — 開啟 Request Status 視窗，找目標狀態記錄，附加 PNG/JPG/GIF 圖檔，重新載入看板即生效。詳見 [Status Icon 指南](docs/technical-guide-status-icon.md)。
 
+**選用：依請求類型自動帶入負責角色** — 在 **Request Type** 視窗中，將 **Description** 欄位填入指定負責角色的 JSON：
+
+```json
+{"Role":"ERP Support"}
+```
+
+使用者在新建請求對話框選擇該請求類型後，**負責角色/團隊** 欄位會自動帶入對應的 `AD_Role`。角色名稱須與 **Role** 視窗的 `Name` 欄位完全一致。Description 留空（或填入其他格式）則不觸發自動帶入。
+
 ---
 
 ### 📋 更新記錄
+
+#### 2026-04-19 — v2.1.3
+- **依請求類型自動帶入負責角色** — `R_RequestType.Description` 支援 `{"Role":"<角色名稱>"}` JSON 格式。在新建請求對話框選擇請求類型時，自動將角色名稱解析為 `AD_Role_ID` 並填入負責角色/團隊欄位。
+- **登入角色預設值** — 新建請求對話框的負責角色/團隊欄位，現在改為預設帶入當前使用者的登入角色，取代原本的硬編碼 ID。
 
 #### 2026-04-05 — v2.0.0
 - **MVVM 全面改寫** — 從 Conductor 模式徹底重構為 ZK MVVM，`RequestKanbanVM` 為純 POJO ViewModel。
