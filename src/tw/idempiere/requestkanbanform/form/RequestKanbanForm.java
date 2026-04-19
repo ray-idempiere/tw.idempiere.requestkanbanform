@@ -652,6 +652,7 @@ public class RequestKanbanForm extends ADForm
     @Override
     public void valueChange(ValueChangeEvent evt) {
         if ("R_RequestType_ID".equals(evt.getPropertyName())) {
+            if (evt.getNewValue() == null) return;
             int requestTypeId = ((Number) evt.getNewValue()).intValue();
             int salesRepId = vm.getSalesRepByRequestType(requestTypeId);
             if (fSalesRep != null) fSalesRep.setValue(salesRepId);
