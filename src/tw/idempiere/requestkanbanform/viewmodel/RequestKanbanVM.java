@@ -733,7 +733,10 @@ public class RequestKanbanVM {
 
         switch (ss) {
             case "Private":
-                sql.append(" AND (AD_User_ID = ? OR SalesRep_ID = ?)");
+                sql.append(" AND (AD_User_ID = ? OR SalesRep_ID = ?" +
+                           " OR EXISTS (SELECT 1 FROM r_requestupdates" +
+                           " WHERE r_request_id = R_Request.r_request_id" +
+                           " AND ad_user_id = ? AND isactive = 'Y'))");
                 break;
             case "Subordinates":
                 List<Integer> subs = getSubordinateIds(userId);
@@ -743,10 +746,13 @@ public class RequestKanbanVM {
                    .append(") OR SalesRep_ID IN (").append(inClause).append("))");
                 break;
             case "Team":
-                sql.append(" AND (AD_User_ID = ? OR SalesRep_ID = ?")
-                   .append(" OR EXISTS (SELECT 1 FROM AD_User_Roles")
-                   .append(" WHERE AD_Role_ID = R_Request.AD_Role_ID AND AD_User_ID = ")
-                   .append(userId).append("))");
+                sql.append(" AND (AD_User_ID = ? OR SalesRep_ID = ?" +
+                           " OR EXISTS (SELECT 1 FROM AD_User_Roles" +
+                           " WHERE AD_Role_ID = R_Request.AD_Role_ID AND AD_User_ID = " +
+                           userId + ")" +
+                           " OR EXISTS (SELECT 1 FROM r_requestupdates" +
+                           " WHERE r_request_id = R_Request.r_request_id" +
+                           " AND ad_user_id = ? AND isactive = 'Y'))");
                 break;
             case "All":
             default:
@@ -772,6 +778,8 @@ public class RequestKanbanVM {
             } else if (!"Subordinates".equals(ss)) {
                 pstmt.setInt(idx++, userId);
                 pstmt.setInt(idx++, userId);
+                if ("Private".equals(ss) || "Team".equals(ss))
+                    pstmt.setInt(idx++, userId);
             }
             if (searchFilter != null && !searchFilter.isEmpty()) {
                 String f = "%" + searchFilter.toUpperCase() + "%";
@@ -926,7 +934,10 @@ public class RequestKanbanVM {
 
         switch (ss) {
             case "Private":
-                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?)");
+                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?" +
+                           " OR EXISTS (SELECT 1 FROM r_requestupdates" +
+                           " WHERE r_request_id = r.r_request_id" +
+                           " AND ad_user_id = ? AND isactive = 'Y'))");
                 break;
             case "Subordinates":
                 List<Integer> subs = getSubordinateIds(userId);
@@ -937,10 +948,12 @@ public class RequestKanbanVM {
                    .append(") OR r.SalesRep_ID IN (").append(inClause).append("))");
                 break;
             case "Team":
-                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?")
-                   .append(" OR EXISTS (SELECT 1 FROM AD_User_Roles")
-                   .append(" WHERE AD_Role_ID = r.AD_Role_ID AND AD_User_ID = ")
-                   .append(userId).append("))");
+                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?" +
+                           " OR EXISTS (SELECT 1 FROM AD_User_Roles" +
+                           " WHERE AD_Role_ID = r.AD_Role_ID AND AD_User_ID = " + userId + ")" +
+                           " OR EXISTS (SELECT 1 FROM r_requestupdates" +
+                           " WHERE r_request_id = r.r_request_id" +
+                           " AND ad_user_id = ? AND isactive = 'Y'))");
                 break;
             case "All":
             default:
@@ -968,6 +981,8 @@ public class RequestKanbanVM {
         } else if (!"Subordinates".equals(ss)) {
             pstmt.setInt(idx++, userId);
             pstmt.setInt(idx++, userId);
+            if ("Private".equals(ss) || "Team".equals(ss))
+                pstmt.setInt(idx++, userId);
         }
         if (searchFilter != null && !searchFilter.isEmpty()) {
             String f = "%" + searchFilter.toUpperCase() + "%";
@@ -1050,7 +1065,10 @@ public class RequestKanbanVM {
 
         switch (ss) {
             case "Private":
-                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?)");
+                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?" +
+                           " OR EXISTS (SELECT 1 FROM r_requestupdates" +
+                           " WHERE r_request_id = r.r_request_id" +
+                           " AND ad_user_id = ? AND isactive = 'Y'))");
                 break;
             case "Subordinates":
                 String inClause = subs.stream().map(String::valueOf)
@@ -1059,10 +1077,12 @@ public class RequestKanbanVM {
                    .append(") OR r.SalesRep_ID IN (").append(inClause).append("))");
                 break;
             case "Team":
-                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?")
-                   .append(" OR EXISTS (SELECT 1 FROM AD_User_Roles")
-                   .append(" WHERE AD_Role_ID = r.AD_Role_ID AND AD_User_ID = ")
-                   .append(userId).append("))");
+                sql.append(" AND (r.AD_User_ID = ? OR r.SalesRep_ID = ?" +
+                           " OR EXISTS (SELECT 1 FROM AD_User_Roles" +
+                           " WHERE AD_Role_ID = r.AD_Role_ID AND AD_User_ID = " + userId + ")" +
+                           " OR EXISTS (SELECT 1 FROM r_requestupdates" +
+                           " WHERE r_request_id = r.r_request_id" +
+                           " AND ad_user_id = ? AND isactive = 'Y'))");
                 break;
             case "All":
             default:
@@ -1084,6 +1104,8 @@ public class RequestKanbanVM {
             } else if (!"Subordinates".equals(ss)) {
                 pstmt.setInt(idx++, userId);
                 pstmt.setInt(idx++, userId);
+                if ("Private".equals(ss) || "Team".equals(ss))
+                    pstmt.setInt(idx++, userId);
             }
             rs = pstmt.executeQuery();
             while (rs.next()) {
