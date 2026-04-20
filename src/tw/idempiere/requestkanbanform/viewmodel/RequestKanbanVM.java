@@ -203,7 +203,7 @@ public class RequestKanbanVM {
 
     @Command
     public void openUserAvatar() {
-        WAttachment wa = new WAttachment(0, 0, 114, currentUserId, null, ev -> {
+        WAttachment wa = new WAttachment(0, 0, 114, currentUserId, null, null, ev -> {
             loadCurrentUserAvatar();
             BindUtils.postNotifyChange(RequestKanbanVM.this, "currentUserAvatarHtml");
         });
