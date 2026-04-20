@@ -67,7 +67,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 - **Zoom to Window**: Jump straight to the iDempiere Request window for power users who demand the full experience.
 - **Internationalization**: English and Traditional Chinese (zh_TW).
 - **Version Display**: Plugin version shown in the top-right corner.
-- **Request Members**: Associate additional users with a request card — they get read-only access to the card and it appears in their Personal scope. See [Members Usage](#members) below.
+- **Request Members**: Associate additional users with a request card — they get read-only access to the card and it appears in their Personal scope. See the Members section below.
 - **Participant Avatars**: Every request card shows a Trello-style avatar strip for the Requester, SalesRep, and all Members. Photo from `AD_User` attachment if available; otherwise a coloured initials circle. Up to 5 avatars with a `+N` overflow chip.
 - **Current User Avatar**: Your own avatar appears in the top-right of the toolbar. Click it to open the Attachment dialog and upload or replace your profile photo — updates instantly without a page reload.
 
@@ -114,11 +114,7 @@ When a user selects that Request Type in the New Request dialog, the **Responsib
 
 ---
 
----
-
 ### 👥 Members
-
-<a name="members"></a>
 
 Any user with edit permission (SalesRep, Requester, or Supervisor) can add other users as **Members** of a request card.
 
@@ -284,7 +280,7 @@ GPL-2.0-only. Share and share alike.
 - **縮放視窗**：一鍵跳至 iDempiere 標準請求視窗。
 - **多國語系**：英文與繁體中文（zh_TW）。
 - **版本顯示**：右上角顯示外掛版本。
-- **請求成員（Members）**：可將其他使用者加入請求卡片，成員享有唯讀存取權限，卡片會出現在其「個人」範圍。詳見下方[成員使用說明](#members-zh)。
+- **請求成員（Members）**：可將其他使用者加入請求卡片，成員享有唯讀存取權限，卡片會出現在其「個人」範圍。詳見下方「成員」章節。
 - **參與者頭像**：每張卡片以 Trello 風格顯示申請人、SalesRep 及所有成員的頭像圓圈。AD_User 有上傳 PNG/JPG 附件則顯示照片，否則顯示首字彩色圓圈。最多顯示 5 個，超過以 `+N` 顯示。
 - **工具列頭像**：右上角顯示登入使用者的頭像（36px 圓形）。點擊可開啟附件對話框上傳大頭照，關閉後立即更新，無需重新整理頁面。
 
@@ -295,7 +291,7 @@ GPL-2.0-only. Share and share alike.
 | 項目 | 說明 |
 |------|------|
 | OSGi Bundle ID | `tw.idempiere.requestkanbanform` |
-| 入口 classname | `tw.idempiere.requestkanbanform.RequestKanbanForm` |
+| 入口 class name | `tw.idempiere.requestkanbanform.RequestKanbanForm` |
 | ViewModel | `RequestKanbanVM`（純 POJO，無 ZK Component 參考） |
 | Form | `RequestKanbanForm`（ZK 配線、對話框開啟） |
 | 架構模式 | ZK MVVM |
@@ -334,8 +330,6 @@ GPL-2.0-only. Share and share alike.
 ---
 
 ### 👥 成員（Members）
-
-<a name="members-zh"></a>
 
 具有編輯權限的使用者（SalesRep、申請人或主管）可將其他人加入請求卡片成為**成員**。
 
