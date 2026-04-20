@@ -315,6 +315,7 @@ public class RequestKanbanForm extends ADForm
                     buildMemberChip(newUserId, newUser.getName(), request, chipsRow, true),
                     memberSearch.getComponent());
                 memberSearch.setValue(null);
+                vm.broadcastRefresh();
             });
             chipsRow.appendChild(memberSearch.getComponent());
         }
@@ -502,6 +503,7 @@ public class RequestKanbanForm extends ADForm
                     org.compiere.util.DB.close(ps);
                 }
                 chipsRow.removeChild(chip);
+                vm.broadcastRefresh();
             });
             chip.appendChild(btnX);
         }
