@@ -33,7 +33,9 @@ import org.compiere.model.MRequest;
 import tw.idempiere.requestkanbanform.model.MRequestKanban;
 import org.compiere.model.MStatus;
 import org.compiere.model.MSysConfig;
+import org.compiere.model.MUser;
 import org.compiere.model.Query;
+import org.adempiere.webui.panel.WAttachment;
 import org.compiere.util.CLogger;
 import org.compiere.util.DB;
 import org.compiere.util.Env;
@@ -97,6 +99,11 @@ public class RequestKanbanVM {
     private List<String> cachedProjectNames = new ArrayList<>();
     private Map<Integer, Integer> cachedProjectCounts = new HashMap<>();
 
+    // ── Current user avatar ──────────────────────────────────────────────────
+    private int    currentUserId;
+    private String currentUserName;
+    private String currentUserAvatarHtml;
+
     // ── Init ─────────────────────────────────────────────────────────────────
 
     @Init
@@ -108,6 +115,7 @@ public class RequestKanbanVM {
         loadStatusIcons();
         refreshKanbanData();
         this.supervisorFlag = checkIsSupervisor();
+        loadCurrentUserAvatar();
     }
 
     /**
@@ -144,6 +152,70 @@ public class RequestKanbanVM {
         }
     }
 
+    private void loadCurrentUserAvatar() {
+        Properties ctx = Env.getCtx();
+        currentUserId = Env.getAD_User_ID(ctx);
+        MUser u = new MUser(ctx, currentUserId, null);
+        currentUserName = u.getName();
+
+        String imgUri = null;
+        try {
+            MAttachment att = MAttachment.get(ctx, 114, currentUserId);
+            if (att != null) {
+                for (MAttachmentEntry entry : att.getEntries()) {
+                    if (entry == null) continue;
+                    String name = entry.getName() != null ? entry.getName().toLowerCase() : "";
+                    if (!name.endsWith(".png") && !name.endsWith(".jpg") && !name.endsWith(".jpeg")) continue;
+                    byte[] data = entry.getData();
+                    if (data == null || data.length == 0) continue;
+                    String ct = entry.getContentType();
+                    if (ct == null || ct.isBlank())
+                        ct = name.endsWith(".png") ? "image/png" : "image/jpeg";
+                    imgUri = "data:" + ct + ";base64," + Base64.getEncoder().encodeToString(data);
+                    break;
+                }
+            }
+        } catch (Exception ex) {
+            logger.log(Level.WARNING, "loadCurrentUserAvatar failed", ex);
+        }
+
+        KanbanRowModel.AvatarModel avatar = new KanbanRowModel.AvatarModel(
+            KanbanRowModel.getInitials(currentUserName),
+            KanbanRowModel.avatarColor(currentUserId),
+            currentUserName,
+            imgUri);
+        currentUserAvatarHtml = buildSingleAvatarHtml(avatar, 36);
+    }
+
+    private static String buildSingleAvatarHtml(KanbanRowModel.AvatarModel a, int size) {
+        String style = "width:" + size + "px;height:" + size + "px;border-radius:50%;" +
+            "display:inline-flex;align-items:center;justify-content:center;" +
+            "font-size:" + (int)(size / 2.5) + "px;font-weight:700;color:#fff;overflow:hidden;" +
+            "background:" + a.color() + ";flex-shrink:0;";
+        if (a.imageDataUri() != null) {
+            return "<div style=\"" + style + "\">" +
+                "<img src=\"" + a.imageDataUri() + "\" " +
+                "style=\"width:100%;height:100%;object-fit:cover;\"/>" +
+                "</div>";
+        }
+        return "<div style=\"" + style + "\">" + escHtml(a.initials()) + "</div>";
+    }
+
+    @Command
+    public void openUserAvatar() {
+        WAttachment wa = new WAttachment(0, 0, 114, currentUserId, null, ev -> {
+            loadCurrentUserAvatar();
+            BindUtils.postNotifyChange(RequestKanbanVM.this, "currentUserAvatarHtml");
+        });
+        wa.setWidth("800px");
+        wa.setHeight("600px");
+        wa.setSclass("attachment-all");
+        wa.setShadow(true);
+        wa.setBorder("normal");
+        wa.setClosable(true);
+        wa.doModal();
+    }
+
     /**
      * Returns the Base64 data URI for the icon of the given R_Status_ID,
      * or null if no image attachment exists.
@@ -151,6 +223,9 @@ public class RequestKanbanVM {
     public String getStatusIconUrl(int r_Status_ID) {
         return statusIconUrls.get(r_Status_ID);
     }
+
+    public String getCurrentUserAvatarHtml() { return currentUserAvatarHtml; }
+    public String getCurrentUserName()        { return currentUserName; }
 
     /**
      * Returns true if the given R_Status_ID has an image attachment to use as icon.
