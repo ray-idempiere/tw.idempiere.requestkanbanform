@@ -256,7 +256,7 @@ public class RequestKanbanForm extends ADForm
                 new org.adempiere.webui.editor.WSearchEditor(
                     "AD_User_ID", false, false, true, userL);
             memberSearch.addValueChangeListener(evt -> {
-                Object val = evt.getValue();
+                Object val = evt.getNewValue();
                 if (!(val instanceof Integer) || (Integer) val <= 0) return;
                 int newUserId = (Integer) val;
                 if (newUserId == request.getAD_User_ID() || newUserId == request.getSalesRep_ID()) {
