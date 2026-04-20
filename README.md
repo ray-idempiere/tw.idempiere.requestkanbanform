@@ -67,6 +67,9 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 - **Zoom to Window**: Jump straight to the iDempiere Request window for power users who demand the full experience.
 - **Internationalization**: English and Traditional Chinese (zh_TW).
 - **Version Display**: Plugin version shown in the top-right corner.
+- **Request Members**: Associate additional users with a request card — they get read-only access to the card and it appears in their Personal scope. See [Members Usage](#members) below.
+- **Participant Avatars**: Every request card shows a Trello-style avatar strip for the Requester, SalesRep, and all Members. Photo from `AD_User` attachment if available; otherwise a coloured initials circle. Up to 5 avatars with a `+N` overflow chip.
+- **Current User Avatar**: Your own avatar appears in the top-right of the toolbar. Click it to open the Attachment dialog and upload or replace your profile photo — updates instantly without a page reload.
 
 ---
 
@@ -83,7 +86,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 | New DB Columns | 0 |
 | iDempiere Version | 12 |
 | Build System | Maven (Tycho) |
-| Plugin Version | 2.2.0 |
+| Plugin Version | 3.0.0 |
 
 **Status Icon Resolution** — On form init, `loadStatusIcons()` iterates all `R_Status` records and calls `MAttachment.get(ctx, 776, statusId)`. If an image entry (`isGraphic()` → `.png/.jpg/.gif`) is found, it is encoded as a Base64 data URI and cached in memory. The ZUL binds `visible` and `src` to `hasStatusIcon()` / `getStatusIconUrl()` on the ViewModel. Size: 16×16 with `object-fit:contain`. See [`docs/technical-guide-status-icon.md`](docs/technical-guide-status-icon.md) for full details.
 
@@ -111,7 +114,43 @@ When a user selects that Request Type in the New Request dialog, the **Responsib
 
 ---
 
+---
+
+### 👥 Members
+
+<a name="members"></a>
+
+Any user with edit permission (SalesRep, Requester, or Supervisor) can add other users as **Members** of a request card.
+
+**Adding a Member**
+1. Open a request card (click any card on the board).
+2. Scroll to the **👥 Members** section in the dialog.
+3. Type a name in the member search field and select the user.
+4. The member chip appears immediately. No save button — the association is written to `r_requestupdates` instantly.
+
+**Removing a Member**
+Click the **×** on any member chip. Permission required: `canEditAny` (SalesRep, Requester, or Supervisor).
+
+**Member Access**
+- The card appears in the member's **Personal** scope on the Kanban board.
+- Clicking the card opens it in **read-only** mode (no editing).
+- Members do not count as SalesRep or Requester — they cannot move, edit, or close the card.
+
+**Avatars on Cards**
+Each card displays a row of circular avatars: Requester first, then SalesRep (if different), then Members. If `AD_User` has a PNG or JPG uploaded as an attachment, the photo is used; otherwise a colour-coded initials circle is shown. More than 5 participants collapses to a `+N` chip.
+
+**Profile Photo**
+Click your own avatar in the top-right toolbar to open the Attachment dialog. Upload a PNG or JPG — the avatar in the toolbar updates immediately on close, and will appear on all cards you are a participant of after the next board refresh.
+
+---
+
 ### 📋 Changelog
+
+#### 2026-04-20 — v3.0.0
+- **Request Members** — Associate additional users with a request via `r_requestupdates`. Members see the card in their Personal scope and can open it in read-only mode. Add/remove chips write to the DB immediately (no save button). Only `canEditAny` users (SalesRep, Requester, Supervisor) can add or remove members.
+- **Participant Avatars on Cards** — Every Kanban card shows a Trello-style avatar strip for all participants (Requester, SalesRep, Members). Profile photo loaded from `AD_User` attachment (PNG/JPG packed as ZIP via `MAttachment` API); falls back to a colour-coded initials circle. Up to 5 avatars shown with a `+N` overflow chip.
+- **Scope filter extended** — Private/Subordinates/Team scopes now include cards where the current user is a Member (via `EXISTS` subquery on `r_requestupdates`).
+- **Current User Avatar in toolbar** — Logged-in user's avatar (36 px circle) displayed in the top-right toolbar. Click to open the `AD_User` Attachment dialog and upload/replace a profile photo; avatar refreshes instantly on close via `BindUtils.postNotifyChange`.
 
 #### 2026-04-19 — v2.2.0
 - **`MRequestKanban` custom model** — New `MRequest` subclass that implements a *beforeSave / afterSave sandwich* to preserve `EndTime` against erasure by iDempiere's core `RequestEventHandler`. `beforeSave` stashes the value before `PO_BEFORE_CHANGE` fires; `afterSave` restores it via direct SQL UPDATE after the event has completed, avoiding infinite recursion.
@@ -245,6 +284,9 @@ GPL-2.0-only. Share and share alike.
 - **縮放視窗**：一鍵跳至 iDempiere 標準請求視窗。
 - **多國語系**：英文與繁體中文（zh_TW）。
 - **版本顯示**：右上角顯示外掛版本。
+- **請求成員（Members）**：可將其他使用者加入請求卡片，成員享有唯讀存取權限，卡片會出現在其「個人」範圍。詳見下方[成員使用說明](#members-zh)。
+- **參與者頭像**：每張卡片以 Trello 風格顯示申請人、SalesRep 及所有成員的頭像圓圈。AD_User 有上傳 PNG/JPG 附件則顯示照片，否則顯示首字彩色圓圈。最多顯示 5 個，超過以 `+N` 顯示。
+- **工具列頭像**：右上角顯示登入使用者的頭像（36px 圓形）。點擊可開啟附件對話框上傳大頭照，關閉後立即更新，無需重新整理頁面。
 
 ---
 
@@ -261,7 +303,7 @@ GPL-2.0-only. Share and share alike.
 | 新增欄位 | 0 |
 | iDempiere 版本 | 12 |
 | 建置工具 | Maven Tycho |
-| 外掛版本 | 2.2.0 |
+| 外掛版本 | 3.0.0 |
 
 **狀態 Icon 解析邏輯** — 表單 init 時，`loadStatusIcons()` 為每個 `R_Status_ID` 呼叫 `MAttachment.get(ctx, 776, statusId)`，找到第一個圖檔（`isGraphic()`）後轉為 Base64 data URI 快取。ZUL 透過 `hasStatusIcon()` / `getStatusIconUrl()` 綁定顯示，16×16，`object-fit:contain`。詳見 [技術文件](docs/technical-guide-status-icon.md)。
 
@@ -289,7 +331,43 @@ GPL-2.0-only. Share and share alike.
 
 ---
 
+---
+
+### 👥 成員（Members）
+
+<a name="members-zh"></a>
+
+具有編輯權限的使用者（SalesRep、申請人或主管）可將其他人加入請求卡片成為**成員**。
+
+**新增成員**
+1. 點開任意請求卡片。
+2. 捲動至對話框中的 **👥 Members** 區塊。
+3. 在搜尋欄輸入姓名並選取使用者。
+4. 成員 Chip 立即出現，資料即寫入 `r_requestupdates`，無需另按存檔。
+
+**移除成員**
+點擊成員 Chip 上的 **×**。需要 `canEditAny` 權限（SalesRep、申請人或主管）。
+
+**成員的存取權限**
+- 卡片會出現在成員的**個人**範圍看板中。
+- 點開卡片為**唯讀**模式，無法編輯。
+- 成員無法移動、編輯或關閉卡片。
+
+**卡片頭像列**
+每張卡片顯示一排圓形頭像：依序為申請人、SalesRep（如不同）、成員。若 `AD_User` 有上傳 PNG 或 JPG 附件，則顯示照片；否則顯示依 User ID 決定顏色的首字圓圈。超過 5 位參與者時折疊為 `+N`。
+
+**個人大頭照**
+點擊工具列右上角自己的頭像，開啟附件對話框，上傳 PNG 或 JPG。關閉對話框後頭像立即更新，下次看板刷新後所有卡片上也會同步顯示。
+
+---
+
 ### 📋 更新記錄
+
+#### 2026-04-20 — v3.0.0
+- **請求成員（Members）** — 透過 `r_requestupdates` 將其他使用者關聯至請求。成員在個人範圍可見該卡片，點開後為唯讀模式。新增/移除 Chip 即時寫入資料庫，無需另按存檔。僅 `canEditAny` 使用者（SalesRep、申請人、主管）可操作。
+- **參與者頭像** — 每張看板卡片顯示 Trello 風格的頭像列（申請人、SalesRep、成員）。透過 `MAttachment` API 讀取 `AD_User` 的 PNG/JPG 附件作為大頭照；無照片則顯示首字彩色圓圈。超過 5 位以 `+N` 顯示。
+- **範圍篩選擴展** — 個人/部屬/團隊範圍現在包含目前使用者為成員的卡片（`r_requestupdates` EXISTS 子查詢）。
+- **工具列頭像** — 右上角顯示登入使用者的 36px 頭像圓圈。點擊開啟 AD_User 附件對話框，上傳/更換大頭照後透過 `BindUtils.postNotifyChange` 即時刷新。
 
 #### 2026-04-19 — v2.2.0
 - **`MRequestKanban` 自訂模型** — 繼承 `MRequest` 的子類別，實作 *beforeSave / afterSave 夾擊模式*，對抗 iDempiere 核心 `RequestEventHandler` 在 `PO_BEFORE_CHANGE` 事件中清除 `EndTime` 的行為。`beforeSave` 在事件觸發前暫存欄位值；`afterSave` 透過直接 SQL UPDATE 還原，避免無限迴圈。
