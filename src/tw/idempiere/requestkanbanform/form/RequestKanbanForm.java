@@ -289,11 +289,18 @@ public class RequestKanbanForm extends ADForm
                         ps.setInt(6, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
                         ps.executeUpdate();
                     } else {
-                        org.compiere.util.DB.executeUpdate(
-                            "UPDATE r_requestupdates SET isactive='Y'," +
-                            " updatedby=" + org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()) +
-                            ", updated=now() WHERE r_request_id=" + request.getR_Request_ID() +
-                            " AND ad_user_id=" + newUserId, null);
+                        PreparedStatement psReact = null;
+                        try {
+                            psReact = org.compiere.util.DB.prepareStatement(
+                                "UPDATE r_requestupdates SET isactive='Y', updatedby=?, updated=now()" +
+                                " WHERE r_request_id=? AND ad_user_id=?", null);
+                            psReact.setInt(1, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
+                            psReact.setInt(2, request.getR_Request_ID());
+                            psReact.setInt(3, newUserId);
+                            psReact.executeUpdate();
+                        } finally {
+                            org.compiere.util.DB.close(psReact);
+                        }
                     }
                 } catch (SQLException ex) {
                     org.compiere.util.CLogger.getCLogger(getClass()).warning("Add member: " + ex.getMessage());
