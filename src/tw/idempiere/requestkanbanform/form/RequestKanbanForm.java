@@ -5,6 +5,9 @@
 package tw.idempiere.requestkanbanform.form;
 
 import java.math.BigDecimal;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -213,6 +216,102 @@ public class RequestKanbanForm extends ADForm
         }
         requestDoc.appendChild(makeFieldRow(Msg.getMsg(Env.getCtx(), "Attachment"), attachRow));
 
+        // ── 👥 Members ────────────────────────────────────────────────────────────
+        Label secMembers = new Label("👥 " + Msg.getMsg(Env.getCtx(), "RK_Members"));
+        secMembers.setStyle("font-size:11px;font-weight:700;color:#888;letter-spacing:0.5px;margin:10px 0 4px;");
+        requestDoc.appendChild(secMembers);
+
+        Hlayout chipsRow = new Hlayout();
+        chipsRow.setSpacing("0px");
+        chipsRow.setStyle("flex-wrap:wrap;");
+        requestDoc.appendChild(chipsRow);
+
+        // Load existing members
+        PreparedStatement memberPstmt = null;
+        ResultSet memberRs = null;
+        try {
+            memberPstmt = org.compiere.util.DB.prepareStatement(
+                "SELECT ru.ad_user_id, u.name FROM r_requestupdates ru" +
+                " JOIN ad_user u ON u.ad_user_id = ru.ad_user_id" +
+                " WHERE ru.r_request_id = ? AND ru.isactive = 'Y' ORDER BY ru.created", null);
+            memberPstmt.setInt(1, request.getR_Request_ID());
+            memberRs = memberPstmt.executeQuery();
+            while (memberRs.next()) {
+                int mid = memberRs.getInt("ad_user_id");
+                String mname = memberRs.getString("name");
+                chipsRow.appendChild(buildMemberChip(mid, mname, request, chipsRow, canEditAny));
+            }
+        } catch (SQLException ex) {
+            org.compiere.util.CLogger.getCLogger(getClass()).warning("Load members: " + ex.getMessage());
+        } finally {
+            org.compiere.util.DB.close(memberRs, memberPstmt);
+        }
+
+        // Add member search (only when canEditAny)
+        if (canEditAny) {
+            org.compiere.model.MLookup userL = org.compiere.model.MLookupFactory.get(
+                org.compiere.util.Env.getCtx(), 0, 0, 5434,
+                org.compiere.model.DisplayType.Search);
+            org.adempiere.webui.editor.WSearchEditor memberSearch =
+                new org.adempiere.webui.editor.WSearchEditor(
+                    "AD_User_ID", false, false, true, userL);
+            memberSearch.addValueChangeListener(evt -> {
+                Object val = evt.getValue();
+                if (!(val instanceof Integer) || (Integer) val <= 0) return;
+                int newUserId = (Integer) val;
+                if (newUserId == request.getAD_User_ID() || newUserId == request.getSalesRep_ID()) {
+                    memberSearch.setValue(null);
+                    return;
+                }
+                // Check if already active member
+                int already = org.compiere.util.DB.getSQLValue(null,
+                    "SELECT count(*) FROM r_requestupdates WHERE r_request_id=? AND ad_user_id=? AND isactive='Y'",
+                    request.getR_Request_ID(), newUserId);
+                if (already > 0) { memberSearch.setValue(null); return; }
+
+                // Insert (or reactivate)
+                PreparedStatement ps = null;
+                try {
+                    int exists = org.compiere.util.DB.getSQLValue(null,
+                        "SELECT count(*) FROM r_requestupdates WHERE r_request_id=? AND ad_user_id=?",
+                        request.getR_Request_ID(), newUserId);
+                    if (exists == 0) {
+                        ps = org.compiere.util.DB.prepareStatement(
+                            "INSERT INTO r_requestupdates" +
+                            " (ad_user_id, r_request_id, ad_client_id, ad_org_id," +
+                            "  createdby, updatedby, r_requestupdates_uu, isactive)" +
+                            " VALUES (?,?,?,?,?,?,gen_random_uuid()::text,'Y')", null);
+                        ps.setInt(1, newUserId);
+                        ps.setInt(2, request.getR_Request_ID());
+                        ps.setInt(3, org.compiere.util.Env.getAD_Client_ID(org.compiere.util.Env.getCtx()));
+                        ps.setInt(4, org.compiere.util.Env.getAD_Org_ID(org.compiere.util.Env.getCtx()));
+                        ps.setInt(5, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
+                        ps.setInt(6, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
+                        ps.executeUpdate();
+                    } else {
+                        org.compiere.util.DB.executeUpdate(
+                            "UPDATE r_requestupdates SET isactive='Y'," +
+                            " updatedby=" + org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()) +
+                            ", updated=now() WHERE r_request_id=" + request.getR_Request_ID() +
+                            " AND ad_user_id=" + newUserId, null);
+                    }
+                } catch (SQLException ex) {
+                    org.compiere.util.CLogger.getCLogger(getClass()).warning("Add member: " + ex.getMessage());
+                    memberSearch.setValue(null);
+                    return;
+                } finally {
+                    org.compiere.util.DB.close(ps);
+                }
+                org.compiere.model.MUser newUser = new org.compiere.model.MUser(
+                    org.compiere.util.Env.getCtx(), newUserId, null);
+                chipsRow.insertBefore(
+                    buildMemberChip(newUserId, newUser.getName(), request, chipsRow, true),
+                    memberSearch.getComponent());
+                memberSearch.setValue(null);
+            });
+            chipsRow.appendChild(memberSearch.getComponent());
+        }
+
         // ── 📝 Summary ────────────────────────────────────────────
         Label sec2 = new Label("📝 " + Msg.getMsg(Env.getCtx(), "RK_Summary"));
         sec2.setStyle("font-size:11px;font-weight:700;color:#888;letter-spacing:0.5px;margin:10px 0 4px;");
@@ -366,6 +465,40 @@ public class RequestKanbanForm extends ADForm
         row.appendChild(lbl);
         row.appendChild(field);
         return row;
+    }
+
+    private Hlayout buildMemberChip(int memberId, String memberName,
+                                     MRequest request, Hlayout chipsRow, boolean canRemove) {
+        Hlayout chip = new Hlayout();
+        chip.setValign("middle");
+        chip.setSpacing("2px");
+        chip.setStyle("background:#e3f2fd;border-radius:12px;padding:2px 8px;margin:2px;");
+        Label lblName = new Label(memberName != null ? memberName : "?");
+        lblName.setStyle("font-size:12px;color:#1565c0;");
+        chip.appendChild(lblName);
+        if (canRemove) {
+            Button btnX = new Button("×");
+            btnX.setStyle("border:none;background:none;color:#888;cursor:pointer;padding:0 2px;font-size:14px;min-width:0;");
+            btnX.addEventListener(Events.ON_CLICK, e -> {
+                PreparedStatement ps = null;
+                try {
+                    ps = org.compiere.util.DB.prepareStatement(
+                        "UPDATE r_requestupdates SET isactive='N', updatedby=?, updated=now()" +
+                        " WHERE r_request_id=? AND ad_user_id=?", null);
+                    ps.setInt(1, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
+                    ps.setInt(2, request.getR_Request_ID());
+                    ps.setInt(3, memberId);
+                    ps.executeUpdate();
+                } catch (SQLException ex) {
+                    org.compiere.util.CLogger.getCLogger(getClass()).warning("Remove member: " + ex.getMessage());
+                } finally {
+                    org.compiere.util.DB.close(ps);
+                }
+                chipsRow.removeChild(chip);
+            });
+            chip.appendChild(btnX);
+        }
+        return chip;
     }
 
     private static String getInitials(String name) {
