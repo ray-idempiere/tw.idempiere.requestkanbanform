@@ -401,6 +401,20 @@
         <field name="EntityType" type="String">U</field>
         <translation language="zh_TW"><field name="MsgText" type="String">找不到此請求</field></translation>
       </row>
+      <row>
+        <field name="Value" type="String">RK_Members</field>
+        <field name="MsgText" type="String">Members</field>
+        <field name="MsgType" type="String">I</field>
+        <field name="EntityType" type="String">U</field>
+        <translation language="zh_TW"><field name="MsgText" type="String">成員</field></translation>
+      </row>
+      <row>
+        <field name="Value" type="String">RK_AddMember</field>
+        <field name="MsgText" type="String">+ Member</field>
+        <field name="MsgType" type="String">I</field>
+        <field name="EntityType" type="String">U</field>
+        <translation language="zh_TW"><field name="MsgText" type="String">+ 成員</field></translation>
+      </row>
     </table>
   </package>
 </adempierePackage>
