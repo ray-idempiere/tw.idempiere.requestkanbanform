@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>tw.idempiere.requestkanbanform</groupId>
   <artifactId>tw.idempiere.requestkanbanform</artifactId>
-  <version>2.2.0-SNAPSHOT</version>
+  <version>2.2.1-SNAPSHOT</version>
   <packaging>eclipse-plugin</packaging>
   <parent>
     <groupId>org.idempiere</groupId>

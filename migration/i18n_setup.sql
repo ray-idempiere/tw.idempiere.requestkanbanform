@@ -18,6 +18,7 @@ FROM (VALUES
     ('RK_RequesterMandatory', 'Requester is required', 'E'),
     ('RK_NoUpdates', 'No updates', 'I'),
     ('RK_UpdateHistory', 'Update History', 'I'),
+    ('RK_UpdateMessage', 'Update Message', 'I'),
     ('RK_RequestFormTitle', 'Request Application', 'I'),
     ('RK_AttachmentHint', 'For attachments, right-click on the request after saving.', 'I'),
     ('RK_HighPriorityLimit', 'Already %1 high priority ticket(s). Limit is 1 per supervisor.', 'W'),
@@ -79,6 +80,7 @@ SELECT AD_Message_ID, 'zh_TW', 0, 0, 'Y', now(), 100, now(), 100,
         WHEN 'RK_RequesterMandatory' THEN '申請人未填'
         WHEN 'RK_NoUpdates' THEN '沒有更新'
         WHEN 'RK_UpdateHistory' THEN '更新歷史'
+        WHEN 'RK_UpdateMessage' THEN '更新訊息'
         WHEN 'RK_RequestFormTitle' THEN '請求申請 (Request Form)'
         WHEN 'RK_AttachmentHint' THEN '若有附件的需求，存檔後，可以在該請求文件上按右鍵，跳轉到 Window 介面上傳附件。'
         WHEN 'RK_HighPriorityLimit' THEN '已有 %1 筆緊急Ticket，目前限定每位主管上限為 1 筆'

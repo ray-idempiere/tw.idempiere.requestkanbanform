@@ -222,12 +222,12 @@ public class RequestKanbanForm extends ADForm
         summaryTxt.setMultiline(true);
         summaryTxt.setHeight("80px");
         summaryTxt.setHflex("1");
-        summaryTxt.setReadonly(true);
-        summaryTxt.setStyle("background-color:rgba(255,255,128,.5);");
+        summaryTxt.setDisabled(true);
+        summaryTxt.setStyle("background-color:rgba(255,255,128,.5);opacity:1;color:#333;");
         requestDoc.appendChild(summaryTxt);
 
-        // ── 💬 Update History ─────────────────────────────────────
-        Label sec3 = new Label("💬 " + Msg.getMsg(Env.getCtx(), "RK_UpdateHistory"));
+        // ── 💬 Update Message ─────────────────────────────────────
+        Label sec3 = new Label("💬 " + Msg.getMsg(Env.getCtx(), "RK_UpdateMessage"));
         sec3.setStyle("font-size:11px;font-weight:700;color:#888;letter-spacing:0.5px;margin:10px 0 4px;");
         requestDoc.appendChild(sec3);
 
