@@ -15,6 +15,17 @@ import java.time.temporal.ChronoUnit;
  */
 public class KanbanRowModel {
 
+    public record AvatarModel(String initials, String color, String name, String imageDataUri) {}
+
+    private static final String[] AVATAR_COLORS = {
+        "#1976d2", "#e65100", "#2e7d32", "#6a1b9a",
+        "#00838f", "#c62828", "#4527a0", "#00695c"
+    };
+
+    public static String avatarColor(int userId) {
+        return AVATAR_COLORS[Math.abs(userId) % AVATAR_COLORS.length];
+    }
+
     private final int requestId;
     private final int statusId;
     private final String statusValue;
@@ -134,5 +145,53 @@ public class KanbanRowModel {
     /** Priority cell style — bold, priority color background, centered. */
     public String getPriorityCellStyle() {
         return "background:" + getPriorityColor(priority) + ";font-weight:700;text-align:center;";
+    }
+
+    public static String getInitials(String name) {
+        if (name == null || name.isEmpty()) return "?";
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length >= 2 && !parts[0].isEmpty() && !parts[parts.length - 1].isEmpty())
+            return (String.valueOf(parts[0].charAt(0))
+                + String.valueOf(parts[parts.length - 1].charAt(0))).toUpperCase();
+        return name.length() >= 2 ? name.substring(0, 2).toUpperCase()
+                                  : name.substring(0, 1).toUpperCase();
+    }
+
+    private static String escHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace("\"", "&quot;");
+    }
+
+    public static String buildAvatarsHtml(java.util.List<AvatarModel> avatars) {
+        if (avatars == null || avatars.isEmpty()) return "";
+        int max = Math.min(avatars.size(), 5);
+        StringBuilder sb = new StringBuilder(
+            "<div style=\"display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;align-items:center;\">");
+        for (int i = 0; i < max; i++) {
+            AvatarModel a = avatars.get(i);
+            if (a.imageDataUri() != null) {
+                sb.append("<img src=\"").append(escHtml(a.imageDataUri()))
+                  .append("\" style=\"border-radius:50%;width:28px;height:28px;")
+                  .append("object-fit:cover;flex-shrink:0;\" title=\"")
+                  .append(escHtml(a.name())).append("\"/>");
+            } else {
+                sb.append("<span style=\"border-radius:50%;background:")
+                  .append(a.color())
+                  .append(";color:#fff;width:28px;height:28px;display:inline-flex;")
+                  .append("align-items:center;justify-content:center;")
+                  .append("font-size:11px;font-weight:700;flex-shrink:0;\" title=\"")
+                  .append(escHtml(a.name())).append("\">")
+                  .append(escHtml(a.initials())).append("</span>");
+            }
+        }
+        if (avatars.size() > 5) {
+            sb.append("<span style=\"border-radius:50%;background:#888;color:#fff;width:28px;height:28px;")
+              .append("display:inline-flex;align-items:center;justify-content:center;")
+              .append("font-size:10px;font-weight:700;flex-shrink:0;\">+")
+              .append(avatars.size() - 5).append("</span>");
+        }
+        sb.append("</div>");
+        return sb.toString();
     }
 }
