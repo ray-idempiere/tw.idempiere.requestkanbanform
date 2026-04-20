@@ -613,6 +613,98 @@ public class RequestKanbanVM {
         }
     }
 
+    private record RawRowData(
+        int requestId, int statusId, String statusVal, String documentNo,
+        String summary, int priority, String customer, String responsible,
+        int requesterId, int salesRepId, boolean isMyRequest, boolean hasAtt,
+        LocalDate startDate, LocalDate endDate, java.util.List<Integer> memberIds
+    ) {}
+
+    private Map<Integer, String> loadUserNames(java.util.Set<Integer> userIds) {
+        if (userIds.isEmpty()) return Collections.emptyMap();
+        String inClause = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+        Map<Integer, String> result = new HashMap<>();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            pstmt = DB.prepareStatement(
+                "SELECT ad_user_id, name FROM ad_user WHERE ad_user_id IN (" + inClause + ")", null);
+            rs = pstmt.executeQuery();
+            while (rs.next())
+                result.put(rs.getInt("ad_user_id"), rs.getString("name"));
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "loadUserNames failed", ex);
+        } finally {
+            DB.close(rs, pstmt);
+        }
+        return result;
+    }
+
+    private Map<Integer, String> loadUserAvatarImages(java.util.Set<Integer> userIds) {
+        if (userIds.isEmpty()) return Collections.emptyMap();
+        String inClause = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+        Map<Integer, String> result = new HashMap<>();
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            pstmt = DB.prepareStatement(
+                "SELECT record_id, binarydata, title FROM ad_attachment" +
+                " WHERE ad_table_id = 114 AND record_id IN (" + inClause + ")" +
+                " AND (lower(title) LIKE '%.png' OR lower(title) LIKE '%.jpg'" +
+                "   OR lower(title) LIKE '%.jpeg') AND binarydata IS NOT NULL", null);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                byte[] data = rs.getBytes("binarydata");
+                if (data == null) continue;
+                String title = rs.getString("title").toLowerCase();
+                String mime = title.endsWith(".png") ? "image/png" : "image/jpeg";
+                result.put(rs.getInt("record_id"),
+                    "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(data));
+            }
+        } catch (SQLException ex) {
+            logger.log(Level.WARNING, "loadUserAvatarImages failed", ex);
+        } finally {
+            DB.close(rs, pstmt);
+        }
+        return result;
+    }
+
+    private List<KanbanRowModel.AvatarModel> buildAvatarList(
+            RawRowData raw, Map<Integer, String> nameCache, Map<Integer, String> imgCache) {
+        List<KanbanRowModel.AvatarModel> avatars = new ArrayList<>();
+        java.util.Set<Integer> seen = new java.util.LinkedHashSet<>();
+
+        // Requester
+        if (seen.add(raw.requesterId())) {
+            String name = raw.customer() != null ? raw.customer()
+                        : nameCache.getOrDefault(raw.requesterId(), "?");
+            avatars.add(new KanbanRowModel.AvatarModel(
+                KanbanRowModel.getInitials(name),
+                KanbanRowModel.avatarColor(raw.requesterId()),
+                name, imgCache.get(raw.requesterId())));
+        }
+        // SalesRep
+        if (raw.salesRepId() > 0 && seen.add(raw.salesRepId())) {
+            String name = raw.responsible() != null ? raw.responsible()
+                        : nameCache.getOrDefault(raw.salesRepId(), "?");
+            avatars.add(new KanbanRowModel.AvatarModel(
+                KanbanRowModel.getInitials(name),
+                KanbanRowModel.avatarColor(raw.salesRepId()),
+                name, imgCache.get(raw.salesRepId())));
+        }
+        // Members
+        for (int memberId : raw.memberIds()) {
+            if (seen.add(memberId)) {
+                String name = nameCache.getOrDefault(memberId, "?");
+                avatars.add(new KanbanRowModel.AvatarModel(
+                    KanbanRowModel.getInitials(name),
+                    KanbanRowModel.avatarColor(memberId),
+                    name, imgCache.get(memberId)));
+            }
+        }
+        return avatars;
+    }
+
     public void refreshKanbanData() {
         kanbanRows = new LinkedHashMap<>();
         for (MStatus s : visibleStatuses) {
@@ -620,12 +712,15 @@ public class RequestKanbanVM {
         }
 
         StringBuilder sql = new StringBuilder(
-            "SELECT StartTime, EndTime," +
+            "SELECT StartTime, EndTime, SalesRep_ID," +
             " (SELECT name FROM ad_user WHERE ad_user_id = R_Request.salesrep_id) Responsible," +
             " (SELECT name FROM ad_user WHERE ad_user_id = R_Request.ad_user_id) Customer," +
             " AD_User_ID, Summary, DocumentNo, StartDate, R_Status_ID, R_Request_ID, Priority," +
             " (SELECT count(*) FROM ad_attachment WHERE ad_table_id = 417" +
-            "  AND record_id = R_Request.R_Request_ID) AttachmentCount" +
+            "  AND record_id = R_Request.R_Request_ID) AttachmentCount," +
+            " (SELECT string_agg(ru.ad_user_id::text, ',')" +
+            "  FROM r_requestupdates ru" +
+            "  WHERE ru.r_request_id = R_Request.r_request_id AND ru.isactive = 'Y') MemberIds" +
             " FROM R_Request" +
             " WHERE EXISTS (SELECT 1 FROM R_Status WHERE R_Status_ID = R_Request.R_Status_ID" +
             "               AND IsFinalClose != 'Y')" +
@@ -664,6 +759,8 @@ public class RequestKanbanVM {
         }
         sql.append(" ORDER BY Priority ASC, StartDate DESC");
 
+        List<RawRowData> rawRows = new ArrayList<>();
+        java.util.Set<Integer> allUserIds = new java.util.LinkedHashSet<>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
@@ -683,41 +780,55 @@ public class RequestKanbanVM {
             }
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                int statusId     = rs.getInt("R_Status_ID");
+                int statusId  = rs.getInt("R_Status_ID");
                 String statusVal = getStatusValueById(statusId);
                 if (statusVal == null || !kanbanRows.containsKey(statusVal)) continue;
-                KanbanRowModel row = buildKanbanRowModel(rs, statusId, statusVal, userId);
-                kanbanRows.get(statusVal).add(row);
+
+                int requestId   = rs.getInt("R_Request_ID");
+                int requesterId = rs.getInt("AD_User_ID");
+                int salesRepId  = rs.getInt("SalesRep_ID");
+                String memberIdsStr = rs.getString("MemberIds");
+                List<Integer> memberIds = memberIdsStr == null ? Collections.emptyList()
+                    : Arrays.stream(memberIdsStr.split(","))
+                            .map(String::trim).filter(s -> !s.isEmpty())
+                            .map(Integer::parseInt).collect(Collectors.toList());
+
+                java.sql.Date startSql = rs.getDate("StartDate");
+                LocalDate startDate    = startSql != null ? startSql.toLocalDate() : null;
+                java.sql.Timestamp endTs = rs.getTimestamp("EndTime");
+                LocalDate endDate        = endTs != null ? endTs.toLocalDateTime().toLocalDate() : null;
+
+                rawRows.add(new RawRowData(
+                    requestId, statusId, statusVal,
+                    rs.getString("DocumentNo"), rs.getString("Summary"),
+                    rs.getInt("Priority"), rs.getString("Customer"), rs.getString("Responsible"),
+                    requesterId, salesRepId, requesterId == userId,
+                    rs.getInt("AttachmentCount") > 0, startDate, endDate, memberIds
+                ));
+                allUserIds.add(requesterId);
+                if (salesRepId > 0) allUserIds.add(salesRepId);
+                allUserIds.addAll(memberIds);
             }
         } catch (SQLException ex) {
             throw new AdempiereException("Unable to load request items", ex);
         } finally {
             DB.close(rs, pstmt);
         }
-    }
 
-    private KanbanRowModel buildKanbanRowModel(ResultSet rs, int statusId,
-                                               String statusVal, int myUserId)
-            throws SQLException {
-        int requestId       = rs.getInt("R_Request_ID");
-        String documentNo   = rs.getString("DocumentNo");
-        String summary      = rs.getString("Summary");
-        int priority        = rs.getInt("Priority");
-        String customer     = rs.getString("Customer");
-        String responsible  = rs.getString("Responsible");
-        int requesterId     = rs.getInt("AD_User_ID");
-        boolean isMyRequest = (requesterId == myUserId);
-        boolean hasAtt      = rs.getInt("AttachmentCount") > 0;
+        Map<Integer, String> nameCache = loadUserNames(allUserIds);
+        Map<Integer, String> imgCache  = loadUserAvatarImages(allUserIds);
 
-        java.sql.Date startSql = rs.getDate("StartDate");
-        LocalDate startDate    = startSql != null ? startSql.toLocalDate() : null;
-
-        java.sql.Timestamp endTs = rs.getTimestamp("EndTime");
-        LocalDate endDate        = endTs != null ? endTs.toLocalDateTime().toLocalDate() : null;
-
-        return new KanbanRowModel(requestId, statusId, statusVal, documentNo, summary,
-                                  priority, customer, responsible,
-                                  startDate, endDate, hasAtt, isMyRequest, "");
+        for (RawRowData raw : rawRows) {
+            List<KanbanRowModel.AvatarModel> avatars = buildAvatarList(raw, nameCache, imgCache);
+            String avatarsHtml = KanbanRowModel.buildAvatarsHtml(avatars);
+            kanbanRows.get(raw.statusVal()).add(new KanbanRowModel(
+                raw.requestId(), raw.statusId(), raw.statusVal(),
+                raw.documentNo(), raw.summary(), raw.priority(),
+                raw.customer(), raw.responsible(),
+                raw.startDate(), raw.endDate(),
+                raw.hasAtt(), raw.isMyRequest(), avatarsHtml
+            ));
+        }
     }
 
     // ── Gantt helpers ─────────────────────────────────────────────────────────
