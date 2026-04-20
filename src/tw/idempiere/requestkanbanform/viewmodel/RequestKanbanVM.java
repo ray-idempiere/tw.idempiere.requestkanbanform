@@ -1206,6 +1206,13 @@ public class RequestKanbanVM {
         return request.getSalesRep_ID() == userId || request.getAD_User_ID() == userId;
     }
 
+    public boolean isMember(int requestId) {
+        int userId = Env.getAD_User_ID(Env.getCtx());
+        return DB.getSQLValue(null,
+            "SELECT count(*) FROM r_requestupdates WHERE r_request_id=? AND ad_user_id=? AND isactive='Y'",
+            requestId, userId) > 0;
+    }
+
     public boolean isMySubordinate(int ad_User_ID) {
         int myId = Env.getAD_User_ID(Env.getCtx());
         return getSubordinateIds(myId).contains(ad_User_ID);
