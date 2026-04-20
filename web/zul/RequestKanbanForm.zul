@@ -175,6 +175,13 @@
 
    <space hflex="1"/>
 
+   <!-- Logged-in user avatar -->
+   <div onClick="@command('openUserAvatar')"
+        style="cursor:pointer;display:inline-flex;align-items:center;margin-right:8px;"
+        tooltiptext="@load(vm.currentUserName)">
+     <html content="@load(vm.currentUserAvatarHtml)"/>
+   </div>
+
    <!-- Final Close checkbox (Gantt only) -->
    <checkbox label="@load(vm.labelFinalClose)"
              visible="@load(vm.ganttView)"
