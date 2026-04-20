@@ -101,6 +101,13 @@
         <translation language="zh_TW"><field name="MsgText" type="String">更新歷史</field></translation>
       </row>
       <row>
+        <field name="Value" type="String">RK_UpdateMessage</field>
+        <field name="MsgText" type="String">Update Message</field>
+        <field name="MsgType" type="String">I</field>
+        <field name="EntityType" type="String">U</field>
+        <translation language="zh_TW"><field name="MsgText" type="String">更新訊息</field></translation>
+      </row>
+      <row>
         <field name="Value" type="String">RK_RequestFormTitle</field>
         <field name="MsgText" type="String">Request Application</field>
         <field name="MsgType" type="String">I</field>
