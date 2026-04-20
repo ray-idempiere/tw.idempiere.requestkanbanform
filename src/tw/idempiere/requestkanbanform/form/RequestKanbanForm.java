@@ -242,19 +242,15 @@ public class RequestKanbanForm extends ADForm
                 chipsRow.appendChild(buildMemberChip(mid, mname, request, chipsRow, canEditAny));
             }
         } catch (SQLException ex) {
-            org.compiere.util.CLogger.getCLogger(getClass()).warning("Load members: " + ex.getMessage());
+            log.warning("Load members: " + ex.getMessage());
         } finally {
             org.compiere.util.DB.close(memberRs, memberPstmt);
         }
 
         // Add member search (only when canEditAny)
         if (canEditAny) {
-            org.compiere.model.MLookup userL = org.compiere.model.MLookupFactory.get(
-                org.compiere.util.Env.getCtx(), 0, 0, 5434,
-                org.compiere.model.DisplayType.Search);
-            org.adempiere.webui.editor.WSearchEditor memberSearch =
-                new org.adempiere.webui.editor.WSearchEditor(
-                    "AD_User_ID", false, false, true, userL);
+            MLookup userL = MLookupFactory.get(Env.getCtx(), 0, 0, 5434, DisplayType.Search);
+            WSearchEditor memberSearch = new WSearchEditor("AD_User_ID", false, false, true, userL);
             memberSearch.addValueChangeListener(evt -> {
                 Object val = evt.getNewValue();
                 if (!(val instanceof Integer) || (Integer) val <= 0) return;
@@ -264,7 +260,7 @@ public class RequestKanbanForm extends ADForm
                     return;
                 }
                 // Check if already active member
-                int already = org.compiere.util.DB.getSQLValue(null,
+                int already = DB.getSQLValue(null,
                     "SELECT count(*) FROM r_requestupdates WHERE r_request_id=? AND ad_user_id=? AND isactive='Y'",
                     request.getR_Request_ID(), newUserId);
                 if (already > 0) { memberSearch.setValue(null); return; }
@@ -272,45 +268,44 @@ public class RequestKanbanForm extends ADForm
                 // Insert (or reactivate)
                 PreparedStatement ps = null;
                 try {
-                    int exists = org.compiere.util.DB.getSQLValue(null,
+                    int exists = DB.getSQLValue(null,
                         "SELECT count(*) FROM r_requestupdates WHERE r_request_id=? AND ad_user_id=?",
                         request.getR_Request_ID(), newUserId);
                     if (exists == 0) {
-                        ps = org.compiere.util.DB.prepareStatement(
+                        ps = DB.prepareStatement(
                             "INSERT INTO r_requestupdates" +
                             " (ad_user_id, r_request_id, ad_client_id, ad_org_id," +
                             "  createdby, updatedby, r_requestupdates_uu, isactive)" +
                             " VALUES (?,?,?,?,?,?,gen_random_uuid()::text,'Y')", null);
                         ps.setInt(1, newUserId);
                         ps.setInt(2, request.getR_Request_ID());
-                        ps.setInt(3, org.compiere.util.Env.getAD_Client_ID(org.compiere.util.Env.getCtx()));
-                        ps.setInt(4, org.compiere.util.Env.getAD_Org_ID(org.compiere.util.Env.getCtx()));
-                        ps.setInt(5, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
-                        ps.setInt(6, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
+                        ps.setInt(3, Env.getAD_Client_ID(Env.getCtx()));
+                        ps.setInt(4, Env.getAD_Org_ID(Env.getCtx()));
+                        ps.setInt(5, Env.getAD_User_ID(Env.getCtx()));
+                        ps.setInt(6, Env.getAD_User_ID(Env.getCtx()));
                         ps.executeUpdate();
                     } else {
                         PreparedStatement psReact = null;
                         try {
-                            psReact = org.compiere.util.DB.prepareStatement(
+                            psReact = DB.prepareStatement(
                                 "UPDATE r_requestupdates SET isactive='Y', updatedby=?, updated=now()" +
                                 " WHERE r_request_id=? AND ad_user_id=?", null);
-                            psReact.setInt(1, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
+                            psReact.setInt(1, Env.getAD_User_ID(Env.getCtx()));
                             psReact.setInt(2, request.getR_Request_ID());
                             psReact.setInt(3, newUserId);
                             psReact.executeUpdate();
                         } finally {
-                            org.compiere.util.DB.close(psReact);
+                            DB.close(psReact);
                         }
                     }
                 } catch (SQLException ex) {
-                    org.compiere.util.CLogger.getCLogger(getClass()).warning("Add member: " + ex.getMessage());
+                    log.warning("Add member: " + ex.getMessage());
                     memberSearch.setValue(null);
                     return;
                 } finally {
-                    org.compiere.util.DB.close(ps);
+                    DB.close(ps);
                 }
-                org.compiere.model.MUser newUser = new org.compiere.model.MUser(
-                    org.compiere.util.Env.getCtx(), newUserId, null);
+                MUser newUser = new MUser(Env.getCtx(), newUserId, null);
                 chipsRow.insertBefore(
                     buildMemberChip(newUserId, newUser.getName(), request, chipsRow, true),
                     memberSearch.getComponent());
@@ -490,17 +485,17 @@ public class RequestKanbanForm extends ADForm
             btnX.addEventListener(Events.ON_CLICK, e -> {
                 PreparedStatement ps = null;
                 try {
-                    ps = org.compiere.util.DB.prepareStatement(
+                    ps = DB.prepareStatement(
                         "UPDATE r_requestupdates SET isactive='N', updatedby=?, updated=now()" +
                         " WHERE r_request_id=? AND ad_user_id=?", null);
-                    ps.setInt(1, org.compiere.util.Env.getAD_User_ID(org.compiere.util.Env.getCtx()));
+                    ps.setInt(1, Env.getAD_User_ID(Env.getCtx()));
                     ps.setInt(2, request.getR_Request_ID());
                     ps.setInt(3, memberId);
                     ps.executeUpdate();
                 } catch (SQLException ex) {
-                    org.compiere.util.CLogger.getCLogger(getClass()).warning("Remove member: " + ex.getMessage());
+                    log.warning("Remove member: " + ex.getMessage());
                 } finally {
-                    org.compiere.util.DB.close(ps);
+                    DB.close(ps);
                 }
                 chipsRow.removeChild(chip);
                 vm.broadcastRefresh();
