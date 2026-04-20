@@ -717,7 +717,7 @@ public class RequestKanbanVM {
 
         return new KanbanRowModel(requestId, statusId, statusVal, documentNo, summary,
                                   priority, customer, responsible,
-                                  startDate, endDate, hasAtt, isMyRequest);
+                                  startDate, endDate, hasAtt, isMyRequest, "");
     }
 
     // ── Gantt helpers ─────────────────────────────────────────────────────────
