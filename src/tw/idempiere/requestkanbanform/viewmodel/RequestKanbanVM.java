@@ -642,29 +642,30 @@ public class RequestKanbanVM {
 
     private Map<Integer, String> loadUserAvatarImages(java.util.Set<Integer> userIds) {
         if (userIds.isEmpty()) return Collections.emptyMap();
-        String inClause = userIds.stream().map(String::valueOf).collect(Collectors.joining(","));
         Map<Integer, String> result = new HashMap<>();
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            pstmt = DB.prepareStatement(
-                "SELECT record_id, binarydata, title FROM ad_attachment" +
-                " WHERE ad_table_id = 114 AND record_id IN (" + inClause + ")" +
-                " AND (lower(title) LIKE '%.png' OR lower(title) LIKE '%.jpg'" +
-                "   OR lower(title) LIKE '%.jpeg') AND binarydata IS NOT NULL", null);
-            rs = pstmt.executeQuery();
-            while (rs.next()) {
-                byte[] data = rs.getBytes("binarydata");
-                if (data == null) continue;
-                String title = rs.getString("title").toLowerCase();
-                String mime = title.endsWith(".png") ? "image/png" : "image/jpeg";
-                result.put(rs.getInt("record_id"),
-                    "data:" + mime + ";base64," + Base64.getEncoder().encodeToString(data));
+        Properties ctx = Env.getCtx();
+        final int AD_USER_TABLE_ID = 110;
+        for (int userId : userIds) {
+            try {
+                MAttachment att = MAttachment.get(ctx, AD_USER_TABLE_ID, userId);
+                if (att == null) continue;
+                MAttachmentEntry[] entries = att.getEntries();
+                if (entries == null) continue;
+                for (MAttachmentEntry entry : entries) {
+                    if (entry == null) continue;
+                    String name = entry.getName() != null ? entry.getName().toLowerCase() : "";
+                    if (!name.endsWith(".png") && !name.endsWith(".jpg") && !name.endsWith(".jpeg")) continue;
+                    byte[] data = entry.getData();
+                    if (data == null || data.length == 0) continue;
+                    String contentType = entry.getContentType();
+                    if (contentType == null || contentType.isBlank())
+                        contentType = name.endsWith(".png") ? "image/png" : "image/jpeg";
+                    result.put(userId, "data:" + contentType + ";base64," + Base64.getEncoder().encodeToString(data));
+                    break;
+                }
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "loadUserAvatarImages: failed for AD_User_ID=" + userId, ex);
             }
-        } catch (SQLException ex) {
-            logger.log(Level.WARNING, "loadUserAvatarImages failed", ex);
-        } finally {
-            DB.close(rs, pstmt);
         }
         return result;
     }
