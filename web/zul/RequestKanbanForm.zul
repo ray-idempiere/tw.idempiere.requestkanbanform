@@ -111,6 +111,7 @@
                  sclass="rk-icon-attach"
                  style="display:inline-block;" />
          </hlayout>
+         <html content="@load(row.avatarsHtml)" />
         </vlayout>
        </listcell>
       </listitem>
