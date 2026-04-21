@@ -150,6 +150,14 @@ public class RequestKanbanForm extends ADForm
         sec1.setStyle("font-size:11px;font-weight:700;color:#888;letter-spacing:0.5px;margin:10px 0 6px;");
         requestDoc.appendChild(sec1);
 
+        // Requester — always readonly
+        MUser requester = new MUser(Env.getCtx(), request.getAD_User_ID(), null);
+        Textbox requesterTxt = new Textbox(requester.getName());
+        requesterTxt.setHflex("1");
+        requesterTxt.setDisabled(true);
+        requesterTxt.setStyle("opacity:1;color:#333;");
+        requestDoc.appendChild(makeFieldRow(Msg.getMsg(Env.getCtx(), "RK_Requester"), requesterTxt));
+
         // Priority — only supervisor can edit
         MLookup priorityL = MLookupFactory.get(Env.getCtx(), 0, 0, 5426, DisplayType.List);
         fUpdatePriority = new WTableDirEditor("Priority", false, false, true, priorityL);
