@@ -92,14 +92,6 @@
                 multiline="true" maxlength="100"
                 style="font-weight:500;font-size:13px;color:#333;" />
          <hlayout hflex="1" valign="middle">
-          <label visible="@load(row.showCustomer)"
-                 value="@load(row.customer)"
-                 style="font-size:11px;color:#777;" />
-          <label visible="@load(row.showResponsible)"
-                 value="@load(row.responsible)"
-                 style="font-size:11px;color:#555;margin-left:10px;" />
-         </hlayout>
-         <hlayout hflex="1" valign="middle">
           <label visible="@load(row.startDate ne null)"
                  value="@load(row.startDateDisplay)"
                  style="font-size:10px;color:#888;" />
