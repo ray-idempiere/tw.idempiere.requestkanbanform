@@ -755,12 +755,11 @@ public class RequestKanbanVM {
         if (requestIds == null || requestIds.isEmpty()) return Collections.emptyMap();
         Map<Integer, String> result = new HashMap<>();
         Properties ctx = Env.getCtx();
-        final int R_REQUEST_TABLE_ID = 417;
         int count = 0;
         for (int requestId : requestIds) {
             if (count >= cap) break;
             try {
-                MAttachment att = MAttachment.get(ctx, R_REQUEST_TABLE_ID, requestId);
+                MAttachment att = MAttachment.get(ctx, MRequest.Table_ID, requestId);
                 if (att == null) continue;
                 MAttachmentEntry[] entries = att.getEntries();
                 if (entries == null) continue;

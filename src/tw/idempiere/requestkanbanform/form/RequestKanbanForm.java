@@ -703,7 +703,7 @@ public class RequestKanbanForm extends ADForm
                     lbl.setStyle("font-size:11px;color:#2e7d32;display:block;");
                     if (dropPreview != null) dropPreview.appendChild(lbl);
                 }
-                if (!pendingNewMedia.isEmpty())
+                if (!pendingNewMedia.isEmpty() && dropZone != null)
                     dropZone.setStyle(dropZone.getStyle().replace("#fafafa", "#e8f5e9"));
             });
             dialog.doModal();
