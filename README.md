@@ -42,6 +42,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 - Color-coded by priority: Urgent (pink) / High (orange) / Medium (yellow) / Low (green). If everything is pink, that is a you problem, not a plugin problem.
 - Due date chips: 🔴 Overdue / ⏰ Due soon / ⏰ Plenty of time (enjoy it while it lasts).
 - Drag-and-drop to change status. Only the SalesRep or Requester can move cards — because democracy has limits.
+- **Image thumbnail banner**: if a request has an image attachment, the first image is displayed as a full-width 100 px banner at the top of its card — Trello-style. Capped at the top 20 requests with attachments per refresh (sorted by Priority ASC, StartDate DESC). Cards beyond the cap still show the paperclip icon.
 - **Status column icons**: upload an image (PNG/JPG/GIF) to the `R_Status` record as an attachment, and it becomes the column header icon at 16×16. No image attached? No icon. You had one job.
 
 **📅 Gantt View** *(the one that makes you feel organized)*
@@ -86,7 +87,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 | New DB Columns | 0 |
 | iDempiere Version | 12 |
 | Build System | Maven (Tycho) |
-| Plugin Version | 3.0.0 |
+| Plugin Version | 3.1.0 |
 
 **Status Icon Resolution** — On form init, `loadStatusIcons()` iterates all `R_Status` records and calls `MAttachment.get(ctx, 776, statusId)`. If an image entry (`isGraphic()` → `.png/.jpg/.gif`) is found, it is encoded as a Base64 data URI and cached in memory. The ZUL binds `visible` and `src` to `hasStatusIcon()` / `getStatusIconUrl()` on the ViewModel. Size: 16×16 with `object-fit:contain`. See [`docs/technical-guide-status-icon.md`](docs/technical-guide-status-icon.md) for full details.
 
@@ -141,6 +142,16 @@ Click your own avatar in the top-right toolbar to open the Attachment dialog. Up
 ---
 
 ### 📋 Changelog
+
+#### 2026-04-23 — v3.1.0
+- **Kanban card image thumbnail banner** — If a request has an image attachment (PNG/JPG/GIF), the first image is rendered as a full-width 100 px Trello-style banner at the top of its Kanban card. Banner images are loaded via `MAttachment` / `MAttachmentEntry` and encoded as Base64 data URIs. Capped at the top 20 requests with attachments per refresh (sorted Priority ASC, StartDate DESC); cards beyond the cap show the paperclip icon only. No new DB columns required.
+
+#### 2026-04-23 — v3.0.2
+- **Priority field read-only on New Request form** — The Priority field in the New Request dialog is now read-only; it defaults to Medium and cannot be changed at creation time.
+
+#### 2026-04-20 — v3.0.1
+- **Read-only Requester field in edit dialog** — The Requester field in the Request Update dialog is now displayed as read-only to prevent accidental reassignment.
+- **Remove text names from Kanban cards** — Participant names are no longer shown as plain text on cards; they are represented exclusively by avatar circles, reducing card clutter.
 
 #### 2026-04-20 — v3.0.0
 - **Request Members** — Associate additional users with a request via `r_requestupdates`. Members see the card in their Personal scope and can open it in read-only mode. Add/remove chips write to the DB immediately (no save button). Only `canEditAny` users (SalesRep, Requester, Supervisor) can add or remove members.
@@ -256,6 +267,7 @@ GPL-2.0-only. Share and share alike.
 - 優先權顏色編碼：緊急（粉紅）/ 高（橘）/ 中（黃）/ 低（綠）。
 - 到期日標籤：🔴 逾期 / ⏰ 快到了 / ⏰ 還早。
 - 拖放換狀態，僅限 SalesRep 或申請人可操作。
+- **圖片縮圖橫幅**：若請求有圖片附件（PNG/JPG/GIF），第一張圖片將以 Trello 風格顯示為卡片頂端全寬 100px 橫幅。每次刷新最多顯示前 20 筆有附件的請求（依優先權升冪、起始日期降冪排序），超過上限的卡片仍顯示迴紋針圖示。
 - **狀態欄 Icon**：在 `R_Status` 記錄上傳 PNG/JPG/GIF 附件，即自動成為欄標題 16×16 圖示。詳見 [Status Icon 技術文件](docs/technical-guide-status-icon.md)。
 
 **📅 甘特視圖** *（讓你覺得自己很有規劃的那個）*
@@ -299,7 +311,7 @@ GPL-2.0-only. Share and share alike.
 | 新增欄位 | 0 |
 | iDempiere 版本 | 12 |
 | 建置工具 | Maven Tycho |
-| 外掛版本 | 3.0.0 |
+| 外掛版本 | 3.1.0 |
 
 **狀態 Icon 解析邏輯** — 表單 init 時，`loadStatusIcons()` 為每個 `R_Status_ID` 呼叫 `MAttachment.get(ctx, 776, statusId)`，找到第一個圖檔（`isGraphic()`）後轉為 Base64 data URI 快取。ZUL 透過 `hasStatusIcon()` / `getStatusIconUrl()` 綁定顯示，16×16，`object-fit:contain`。詳見 [技術文件](docs/technical-guide-status-icon.md)。
 
@@ -356,6 +368,16 @@ GPL-2.0-only. Share and share alike.
 ---
 
 ### 📋 更新記錄
+
+#### 2026-04-23 — v3.1.0
+- **看板卡片圖片縮圖橫幅** — 若請求有圖片附件（PNG/JPG/GIF），第一張圖片以全寬 100px Trello 風格橫幅顯示於卡片頂端。圖片透過 `MAttachment` / `MAttachmentEntry` 讀取並編碼為 Base64 data URI。每次刷新最多處理前 20 筆有附件的請求（依優先權升冪、起始日期降冪），超過上限的卡片僅顯示迴紋針圖示。無需新增資料表或欄位。
+
+#### 2026-04-23 — v3.0.2
+- **新建請求表單優先權欄位唯讀** — 新建請求對話框中的優先權欄位改為唯讀，建立時固定為「中」，無法變更。
+
+#### 2026-04-20 — v3.0.1
+- **更新對話框申請人欄位唯讀** — 請求更新對話框中的申請人欄位改為唯讀顯示，防止誤操作重新指派。
+- **移除卡片文字姓名** — 卡片上不再顯示純文字的參與者姓名，改以頭像圓圈呈現，減少卡片雜訊。
 
 #### 2026-04-20 — v3.0.0
 - **請求成員（Members）** — 透過 `r_requestupdates` 將其他使用者關聯至請求。成員在個人範圍可見該卡片，點開後為唯讀模式。新增/移除 Chip 即時寫入資料庫，無需另按存檔。僅 `canEditAny` 使用者（SalesRep、申請人、主管）可操作。
