@@ -3,9 +3,15 @@
 	<window
 		position="center,center" closable="true"
 		action="show: slideDown;hide: slideUp" border="normal"
-		 width="460px">
+		width="460px"
+		upload="true,maxsize=-1">
 
 			<vlayout>
+			<div id="dropZoneUpdate"
+			     style="border:2px dashed #aab;border-radius:6px;padding:12px;text-align:center;color:#888;font-size:12px;margin-bottom:6px;background:#fafafa;">
+			 拖曳圖片至此上傳（立即儲存）
+			</div>
+			<div id="dropPreviewUpdate"/>
 			<div id="requestDoc"></div>
 			<listbox id="boxUpdates" height="200px" width="100%"
 					oddRowSclass="non-odd">

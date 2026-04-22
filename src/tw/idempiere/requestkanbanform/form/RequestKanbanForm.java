@@ -467,6 +467,49 @@ public class RequestKanbanForm extends ADForm
             vm.zoomToRequest(request.getR_Request_ID());
             dialog.detach();
         });
+
+        // Wire drag-drop upload — save immediately since the request already exists
+        Div dropZone    = (Div) dialog.getFellow("dropZoneUpdate");
+        Div dropPreview = (Div) dialog.getFellow("dropPreviewUpdate");
+        if (dropZone != null) {
+            dialog.addEventListener(Events.ON_UPLOAD, ev -> {
+                org.zkoss.zk.ui.event.UploadEvent ue = (org.zkoss.zk.ui.event.UploadEvent) ev;
+                org.zkoss.util.media.Media[] medias = ue.getMedias();
+                if (medias == null) return;
+                boolean anyAdded = false;
+                try {
+                    org.compiere.model.MAttachment att =
+                        org.compiere.model.MAttachment.get(Env.getCtx(), MRequest.Table_ID, request.getR_Request_ID());
+                    if (att == null)
+                        att = new org.compiere.model.MAttachment(Env.getCtx(),
+                            MRequest.Table_ID, request.getR_Request_ID(), null);
+                    for (org.zkoss.util.media.Media m : medias) {
+                        if (m == null || m.getContentType() == null) continue;
+                        if (!m.getContentType().startsWith("image/")) {
+                            Clients.showNotification(
+                                m.getName() + " 不是圖片格式，略過。",
+                                Clients.NOTIFICATION_TYPE_WARNING, null, null, 3000);
+                            continue;
+                        }
+                        att.addEntry(m.getName(), m.getByteData());
+                        anyAdded = true;
+                        Label lbl = new Label("✓ " + m.getName());
+                        lbl.setStyle("font-size:11px;color:#2e7d32;display:block;");
+                        if (dropPreview != null) dropPreview.appendChild(lbl);
+                    }
+                    if (anyAdded) {
+                        att.save();
+                        dropZone.setStyle(dropZone.getStyle().replace("#fafafa", "#e8f5e9"));
+                        vm.broadcastRefresh();
+                    }
+                } catch (Exception ex) {
+                    log.log(Level.WARNING, "Update dialog onUpload failed", ex);
+                    Clients.showNotification(
+                        "上傳失敗：" + ex.getMessage(),
+                        Clients.NOTIFICATION_TYPE_ERROR, null, null, 4000);
+                }
+            });
+        }
     }
 
     private Hlayout makeFieldRow(String labelText, Component field) {
