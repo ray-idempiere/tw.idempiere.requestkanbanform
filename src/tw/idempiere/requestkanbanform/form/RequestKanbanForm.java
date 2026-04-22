@@ -472,7 +472,7 @@ public class RequestKanbanForm extends ADForm
         Div dropZone    = (Div) dialog.getFellow("dropZoneUpdate");
         Div dropPreview = (Div) dialog.getFellow("dropPreviewUpdate");
         if (dropZone != null) {
-            dialog.addEventListener(Events.ON_UPLOAD, ev -> {
+            dropZone.addEventListener(Events.ON_UPLOAD, ev -> {
                 org.zkoss.zk.ui.event.UploadEvent ue = (org.zkoss.zk.ui.event.UploadEvent) ev;
                 org.zkoss.util.media.Media[] medias = ue.getMedias();
                 if (medias == null) return;
@@ -685,7 +685,7 @@ public class RequestKanbanForm extends ADForm
             pendingNewMedia.clear();
             Div dropZone    = (Div) dialog.getFellow("dropZoneNew");
             Div dropPreview = (Div) dialog.getFellow("dropPreviewNew");
-            dialog.addEventListener(org.zkoss.zk.ui.event.Events.ON_UPLOAD, ev -> {
+            if (dropZone != null) dropZone.addEventListener(org.zkoss.zk.ui.event.Events.ON_UPLOAD, ev -> {
                 org.zkoss.zk.ui.event.UploadEvent ue = (org.zkoss.zk.ui.event.UploadEvent) ev;
                 org.zkoss.util.media.Media[] medias = ue.getMedias();
                 if (medias == null) return;

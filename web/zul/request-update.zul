@@ -3,11 +3,11 @@
 	<window
 		position="center,center" closable="true"
 		action="show: slideDown;hide: slideUp" border="normal"
-		width="460px"
-		upload="true,maxsize=-1">
+		width="460px">
 
 			<vlayout>
 			<div id="dropZoneUpdate"
+			     upload="true,maxsize=-1"
 			     style="border:2px dashed #aab;border-radius:6px;padding:12px;text-align:center;color:#888;font-size:12px;margin-bottom:6px;background:#fafafa;">
 			 拖曳圖片至此上傳（立即儲存）
 			</div>

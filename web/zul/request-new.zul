@@ -2,10 +2,10 @@
 <zk>
  <window title="Request Application"
          position="center,center" closable="true"
-         border="normal" width="560px" height="auto"
-         upload="true,maxsize=-1">
+         border="normal" width="560px" height="auto">
   <vlayout spacing="0" style="padding:8px;">
    <div id="dropZoneNew"
+        upload="true,maxsize=-1"
         style="border:2px dashed #aab;border-radius:6px;padding:12px;text-align:center;color:#888;font-size:12px;margin-bottom:6px;background:#fafafa;">
     拖曳圖片至此上傳（儲存後生效）
    </div>
