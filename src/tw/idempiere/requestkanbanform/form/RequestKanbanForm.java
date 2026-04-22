@@ -90,6 +90,9 @@ public class RequestKanbanForm extends ADForm
     private Textbox          fUpdateResult;
     private Doublespinner    fSpinnerQuantity;
 
+    // Pending images dropped on the new-request dialog before save
+    private final java.util.List<org.zkoss.util.media.Media> pendingNewMedia = new java.util.ArrayList<>();
+
     // Cross-session real-time refresh (article pattern: capture desktop at init)
     private Desktop myDesktop;
     private EventHandler eventSubscriber;
@@ -614,7 +617,11 @@ public class RequestKanbanForm extends ADForm
         if (btnCancel != null) btnCancel.addEventListener(Events.ON_CLICK, e -> dialog.detach());
         if (btnSave != null) btnSave.addEventListener(Events.ON_CLICK, e -> {
             String summary = txtSummary != null ? txtSummary.getValue().trim() : "";
-            vm.saveNewRequest(fUser, fDoc, fPriority, fDepart, fSalesRep, fRole, fProject, summary);
+            int savedId = vm.saveNewRequest(fUser, fDoc, fPriority, fDepart, fSalesRep, fRole, fProject, summary);
+            if (savedId > 0 && !pendingNewMedia.isEmpty()) {
+                savePendingMediaToRequest(savedId);
+            }
+            pendingNewMedia.clear();
             dialog.detach();
         });
     }
@@ -628,6 +635,29 @@ public class RequestKanbanForm extends ADForm
             Window dialog = (Window) Executions.createComponents("~./zul/request-new.zul", this, args);
             buildNewRequestDialogEditors(dialog);
             bindNewRequestButtons(dialog);
+            pendingNewMedia.clear();
+            Div dropZone    = (Div) dialog.getFellow("dropZoneNew");
+            Div dropPreview = (Div) dialog.getFellow("dropPreviewNew");
+            dialog.addEventListener(org.zkoss.zk.ui.event.Events.ON_UPLOAD, ev -> {
+                org.zkoss.zk.ui.event.UploadEvent ue = (org.zkoss.zk.ui.event.UploadEvent) ev;
+                org.zkoss.util.media.Media[] medias = ue.getMedias();
+                if (medias == null) return;
+                for (org.zkoss.util.media.Media m : medias) {
+                    if (m == null || m.getContentType() == null) continue;
+                    if (!m.getContentType().startsWith("image/")) {
+                        Clients.showNotification(
+                            m.getName() + " 不是圖片格式，略過。",
+                            Clients.NOTIFICATION_TYPE_WARNING, null, null, 3000);
+                        continue;
+                    }
+                    pendingNewMedia.add(m);
+                    Label lbl = new Label("✓ " + m.getName());
+                    lbl.setStyle("font-size:11px;color:#2e7d32;display:block;");
+                    dropPreview.appendChild(lbl);
+                }
+                if (!pendingNewMedia.isEmpty())
+                    dropZone.setStyle(dropZone.getStyle().replace("#fafafa", "#e8f5e9"));
+            });
             dialog.doModal();
         } catch (Exception e) {
             log.warning("Cannot open new request dialog: " + e.getMessage());
@@ -761,6 +791,26 @@ public class RequestKanbanForm extends ADForm
             vm.onGanttDrop(Integer.parseInt(String.valueOf(reqObj)),
                            Integer.parseInt(String.valueOf(projObj)));
         });
+    }
+
+    private void savePendingMediaToRequest(int requestId) {
+        try {
+            org.compiere.model.MAttachment att =
+                org.compiere.model.MAttachment.get(Env.getCtx(), MRequest.Table_ID, requestId);
+            if (att == null) {
+                att = new org.compiere.model.MAttachment(Env.getCtx(), MRequest.Table_ID, requestId, null);
+            }
+            for (org.zkoss.util.media.Media m : pendingNewMedia) {
+                try {
+                    att.addEntry(m.getName(), m.getByteData());
+                } catch (Exception ex) {
+                    log.warning("savePendingMediaToRequest: could not add " + m.getName() + ": " + ex.getMessage());
+                }
+            }
+            att.save();
+        } catch (Exception ex) {
+            log.log(Level.WARNING, "savePendingMediaToRequest failed for R_Request_ID=" + requestId, ex);
+        }
     }
 
     private void registerOsgiEventHandler() {

@@ -539,9 +539,9 @@ public class RequestKanbanVM {
         if (form != null) form.openRequestUpdateDialog(requestId);
     }
 
-    public void saveNewRequest(WEditor fUser, WEditor fDoc, WEditor fPriority,
-                               WEditor fDepart, WEditor fSalesRep, WEditor fRole,
-                               WEditor fProject, String summary) {
+    public int saveNewRequest(WEditor fUser, WEditor fDoc, WEditor fPriority,
+                              WEditor fDepart, WEditor fSalesRep, WEditor fRole,
+                              WEditor fProject, String summary) {
         Properties ctx = Env.getCtx();
         MRequestKanban req = new MRequestKanban(ctx, 0, null);
 
@@ -588,7 +588,7 @@ public class RequestKanbanVM {
         if (summary == null || summary.trim().isEmpty()) {
             Clients.showNotification("Please enter a request summary.",
                 Clients.NOTIFICATION_TYPE_WARNING, null, null, 3000);
-            return;
+            return 0;
         }
         req.setSummary(summary.trim());
 
@@ -603,11 +603,12 @@ public class RequestKanbanVM {
         if (!req.save()) {
             Clients.showNotification("Failed to save request",
                 Clients.NOTIFICATION_TYPE_ERROR, null, null, 3000);
-            return;
+            return 0;
         }
         broadcastRefresh();
         refreshKanbanData();
         BindUtils.postNotifyChange(this, "*");
+        return req.getR_Request_ID();
     }
 
     public void saveNewProject(String name, java.util.Date startDate, java.util.Date endDate) {
