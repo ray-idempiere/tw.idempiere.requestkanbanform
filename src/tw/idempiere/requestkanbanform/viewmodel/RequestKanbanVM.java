@@ -745,6 +745,41 @@ public class RequestKanbanVM {
         return result;
     }
 
+    /**
+     * Loads the first image attachment for each request ID in the given list,
+     * up to a maximum of {@code cap} entries. Returns a map from request ID to
+     * a Base64 data URI string suitable for use in an HTML src attribute.
+     */
+    private Map<Integer, String> loadRequestThumbnails(List<Integer> requestIds, int cap) {
+        Map<Integer, String> result = new HashMap<>();
+        Properties ctx = Env.getCtx();
+        final int R_REQUEST_TABLE_ID = 417;
+        int count = 0;
+        for (int requestId : requestIds) {
+            if (count >= cap) break;
+            try {
+                MAttachment att = MAttachment.get(ctx, R_REQUEST_TABLE_ID, requestId);
+                if (att == null) continue;
+                MAttachmentEntry[] entries = att.getEntries();
+                if (entries == null) continue;
+                for (MAttachmentEntry entry : entries) {
+                    if (entry == null || !entry.isGraphic()) continue;
+                    byte[] data = entry.getData();
+                    if (data == null || data.length == 0) continue;
+                    String ct = entry.getContentType();
+                    if (ct == null || ct.isBlank()) ct = "image/png";
+                    String uri = "data:" + ct + ";base64," + Base64.getEncoder().encodeToString(data);
+                    result.put(requestId, uri);
+                    count++;
+                    break; // first image only
+                }
+            } catch (Exception ex) {
+                logger.log(Level.WARNING, "loadRequestThumbnails: failed for R_Request_ID=" + requestId, ex);
+            }
+        }
+        return result;
+    }
+
     private List<KanbanRowModel.AvatarModel> buildAvatarList(
             RawRowData raw, Map<Integer, String> nameCache, Map<Integer, String> imgCache) {
         List<KanbanRowModel.AvatarModel> avatars = new ArrayList<>();
@@ -899,6 +934,13 @@ public class RequestKanbanVM {
             DB.close(rs, pstmt);
         }
 
+        // Collect request IDs that have attachments, in query order (Priority ASC, StartDate DESC)
+        List<Integer> idsWithAttach = rawRows.stream()
+            .filter(RawRowData::hasAtt)
+            .map(RawRowData::requestId)
+            .collect(Collectors.toList());
+        Map<Integer, String> thumbnailCache = loadRequestThumbnails(idsWithAttach, 20);
+
         Map<Integer, String> nameCache = loadUserNames(allUserIds);
         Map<Integer, String> imgCache  = loadUserAvatarImages(allUserIds);
 
@@ -910,7 +952,8 @@ public class RequestKanbanVM {
                 raw.documentNo(), raw.summary(), raw.priority(),
                 raw.customer(), raw.responsible(),
                 raw.startDate(), raw.endDate(),
-                raw.hasAtt(), raw.isMyRequest(), avatarsHtml, null  // thumbnailDataUri: wired in Task 2
+                raw.hasAtt(), raw.isMyRequest(), avatarsHtml,
+                thumbnailCache.get(raw.requestId())  // null if not in top-20 or no image
             ));
         }
     }
