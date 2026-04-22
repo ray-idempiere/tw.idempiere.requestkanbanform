@@ -18,9 +18,6 @@
    <textbox id="txtSummary" hflex="1" rows="4"
             style="margin-top:2px;"
             placeholder="Enter request summary..."/>
-   <separator bar="false" spacing="4px"/>
-   <label value="For attachments, right-click on the request after saving."
-          style="font-size:11px;color:#888;font-style:italic;"/>
    <separator bar="false" spacing="6px"/>
    <hlayout spacing="6px" style="justify-content:flex-end;">
     <button id="btnCancel" label="Cancel"

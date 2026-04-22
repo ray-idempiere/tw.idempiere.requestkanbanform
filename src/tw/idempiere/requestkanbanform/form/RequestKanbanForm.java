@@ -614,7 +614,10 @@ public class RequestKanbanForm extends ADForm
         Button btnCancel = (Button) dialog.getFellow("btnCancel");
         org.zkoss.zul.Textbox txtSummary =
             (org.zkoss.zul.Textbox) dialog.getFellow("txtSummary");
-        if (btnCancel != null) btnCancel.addEventListener(Events.ON_CLICK, e -> dialog.detach());
+        if (btnCancel != null) btnCancel.addEventListener(Events.ON_CLICK, e -> {
+            pendingNewMedia.clear();
+            dialog.detach();
+        });
         if (btnSave != null) btnSave.addEventListener(Events.ON_CLICK, e -> {
             String summary = txtSummary != null ? txtSummary.getValue().trim() : "";
             int savedId = vm.saveNewRequest(fUser, fDoc, fPriority, fDepart, fSalesRep, fRole, fProject, summary);
