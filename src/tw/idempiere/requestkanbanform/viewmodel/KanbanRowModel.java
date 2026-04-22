@@ -44,13 +44,14 @@ public class KanbanRowModel {
     private final String dueBadgeText;   // null if no EndTime
     private final String dueBadgeStyle;  // null if no EndTime
     private final String avatarsHtml;
+    private final String thumbnailDataUri;
 
     public KanbanRowModel(int requestId, int statusId, String statusValue,
                           String documentNo, String summary, int priority,
                           String customer, String responsible,
                           LocalDate startDate, LocalDate endDate,
                           boolean hasAttachment, boolean isMyRequest,
-                          String avatarsHtml) {
+                          String avatarsHtml, String thumbnailDataUri) {
         this.requestId    = requestId;
         this.statusId     = statusId;
         this.statusValue  = statusValue;
@@ -64,6 +65,7 @@ public class KanbanRowModel {
         this.hasAttachment = hasAttachment;
         this.myRequest    = isMyRequest;
         this.avatarsHtml  = avatarsHtml != null ? avatarsHtml : "";
+        this.thumbnailDataUri = thumbnailDataUri;
         this.cardStyle    = buildCardStyle(priority, isMyRequest);
         if (endDate != null) {
             long daysLeft = ChronoUnit.DAYS.between(LocalDate.now(), endDate);
@@ -127,6 +129,8 @@ public class KanbanRowModel {
     public String getDueBadgeText()  { return dueBadgeText; }
     public String getDueBadgeStyle() { return dueBadgeStyle; }
     public String getAvatarsHtml() { return avatarsHtml; }
+    public String getThumbnailDataUri() { return thumbnailDataUri; }
+    public boolean isShowThumbnail()    { return thumbnailDataUri != null; }
 
     /** Formatted start date for display, e.g. "2026/3/1". Null if startDate is null. */
     public String getStartDateDisplay() {

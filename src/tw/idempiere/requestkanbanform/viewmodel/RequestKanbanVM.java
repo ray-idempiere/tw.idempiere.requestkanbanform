@@ -910,7 +910,7 @@ public class RequestKanbanVM {
                 raw.documentNo(), raw.summary(), raw.priority(),
                 raw.customer(), raw.responsible(),
                 raw.startDate(), raw.endDate(),
-                raw.hasAtt(), raw.isMyRequest(), avatarsHtml
+                raw.hasAtt(), raw.isMyRequest(), avatarsHtml, null  // thumbnailDataUri: wired in Task 2
             ));
         }
     }
