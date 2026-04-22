@@ -472,7 +472,11 @@ public class RequestKanbanForm extends ADForm
         Div dropZone    = (Div) dialog.getFellow("dropZoneUpdate");
         Div dropPreview = (Div) dialog.getFellow("dropPreviewUpdate");
         if (dropZone != null) {
-            dropZone.addEventListener(Events.ON_UPLOAD, ev -> {
+            Button uploadBtn = new Button("📎 點擊或拖曳圖片至此上傳（立即儲存）");
+            uploadBtn.setUpload("true,maxsize=-1");
+            uploadBtn.setStyle("width:100%;border:none;background:none;color:#888;font-size:12px;padding:10px;cursor:pointer;");
+            dropZone.appendChild(uploadBtn);
+            uploadBtn.addEventListener(Events.ON_UPLOAD, ev -> {
                 org.zkoss.zk.ui.event.UploadEvent ue = (org.zkoss.zk.ui.event.UploadEvent) ev;
                 org.zkoss.util.media.Media[] medias = ue.getMedias();
                 if (medias == null) return;
@@ -685,7 +689,12 @@ public class RequestKanbanForm extends ADForm
             pendingNewMedia.clear();
             Div dropZone    = (Div) dialog.getFellow("dropZoneNew");
             Div dropPreview = (Div) dialog.getFellow("dropPreviewNew");
-            if (dropZone != null) dropZone.addEventListener(org.zkoss.zk.ui.event.Events.ON_UPLOAD, ev -> {
+            if (dropZone != null) {
+                Button uploadBtnNew = new Button("📎 點擊或拖曳圖片至此上傳（儲存後生效）");
+                uploadBtnNew.setUpload("true,maxsize=-1");
+                uploadBtnNew.setStyle("width:100%;border:none;background:none;color:#888;font-size:12px;padding:10px;cursor:pointer;");
+                dropZone.appendChild(uploadBtnNew);
+                uploadBtnNew.addEventListener(org.zkoss.zk.ui.event.Events.ON_UPLOAD, ev -> {
                 org.zkoss.zk.ui.event.UploadEvent ue = (org.zkoss.zk.ui.event.UploadEvent) ev;
                 org.zkoss.util.media.Media[] medias = ue.getMedias();
                 if (medias == null) return;
@@ -705,7 +714,8 @@ public class RequestKanbanForm extends ADForm
                 }
                 if (!pendingNewMedia.isEmpty() && dropZone != null)
                     dropZone.setStyle(dropZone.getStyle().replace("#fafafa", "#e8f5e9"));
-            });
+                });
+            }
             dialog.doModal();
         } catch (Exception e) {
             log.warning("Cannot open new request dialog: " + e.getMessage());
