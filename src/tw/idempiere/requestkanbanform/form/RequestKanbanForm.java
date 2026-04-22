@@ -491,6 +491,7 @@ public class RequestKanbanForm extends ADForm
                                 Clients.NOTIFICATION_TYPE_WARNING, null, null, 3000);
                             continue;
                         }
+                        if (!m.isBinary()) continue;
                         att.addEntry(m.getName(), m.getByteData());
                         anyAdded = true;
                         Label lbl = new Label("✓ " + m.getName());
@@ -696,10 +697,11 @@ public class RequestKanbanForm extends ADForm
                             Clients.NOTIFICATION_TYPE_WARNING, null, null, 3000);
                         continue;
                     }
+                    if (!m.isBinary()) continue;
                     pendingNewMedia.add(m);
                     Label lbl = new Label("✓ " + m.getName());
                     lbl.setStyle("font-size:11px;color:#2e7d32;display:block;");
-                    dropPreview.appendChild(lbl);
+                    if (dropPreview != null) dropPreview.appendChild(lbl);
                 }
                 if (!pendingNewMedia.isEmpty())
                     dropZone.setStyle(dropZone.getStyle().replace("#fafafa", "#e8f5e9"));
