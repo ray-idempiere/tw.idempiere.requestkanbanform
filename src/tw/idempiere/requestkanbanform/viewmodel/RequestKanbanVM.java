@@ -751,6 +751,7 @@ public class RequestKanbanVM {
      * a Base64 data URI string suitable for use in an HTML src attribute.
      */
     private Map<Integer, String> loadRequestThumbnails(List<Integer> requestIds, int cap) {
+        if (requestIds == null || requestIds.isEmpty()) return Collections.emptyMap();
         Map<Integer, String> result = new HashMap<>();
         Properties ctx = Env.getCtx();
         final int R_REQUEST_TABLE_ID = 417;
