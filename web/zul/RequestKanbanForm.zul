@@ -90,7 +90,7 @@
         <vlayout spacing="5px" style="@load(row.cardStyle)">
          <image visible="@load(row.showThumbnail)"
                 src="@load(row.thumbnailDataUri)"
-                style="width:100%;height:100px;object-fit:cover;border-radius:6px 6px 0 0;display:block;margin:-10px -10px 6px -10px;max-width:calc(100% + 20px);" />
+                style="width:100%;height:100px;object-fit:cover;border-radius:8px 8px 0 0;display:block;margin:-10px -10px 6px -10px;max-width:calc(100% + 20px);" />
          <label value="@load(row.summary)"
                 multiline="true" maxlength="100"
                 style="font-weight:500;font-size:13px;color:#333;" />
