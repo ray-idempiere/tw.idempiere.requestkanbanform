@@ -547,6 +547,7 @@ public class RequestKanbanForm extends ADForm
         fPriority = new WTableDirEditor("Priority", false, false, true, userPriorityL);
         fPriority.setMandatory(true);
         fPriority.setValue("5");
+        fPriority.setReadWrite(false);
         fPriority.addValueChangeListener(this);
 
         MLookup departL = MLookupFactory.get(Env.getCtx(), 0, 0, 54792, DisplayType.TableDir);

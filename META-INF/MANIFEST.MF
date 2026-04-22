@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Request Kanban Form
 Bundle-SymbolicName: tw.idempiere.requestkanbanform
-Bundle-Version: 3.0.1.qualifier
+Bundle-Version: 3.0.2.qualifier
 Bundle-Vendor: Ray Lee
 Bundle-RequiredExecutionEnvironment: JavaSE-17
 Bundle-ActivationPolicy: lazy
