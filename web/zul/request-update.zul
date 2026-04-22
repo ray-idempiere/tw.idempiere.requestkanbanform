@@ -3,13 +3,9 @@
 	<window
 		position="center,center" closable="true"
 		action="show: slideDown;hide: slideUp" border="normal"
-		width="460px">
+		 width="460px">
 
 			<vlayout>
-			<div id="dropZoneUpdate"
-			     style="border:2px dashed #aab;border-radius:6px;text-align:center;margin-bottom:6px;background:#fafafa;"/>
-
-			<div id="dropPreviewUpdate"/>
 			<div id="requestDoc"></div>
 			<listbox id="boxUpdates" height="200px" width="100%"
 					oddRowSclass="non-odd">

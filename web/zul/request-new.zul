@@ -4,10 +4,6 @@
          position="center,center" closable="true"
          border="normal" width="560px" height="auto">
   <vlayout spacing="0" style="padding:8px;">
-   <div id="dropZoneNew"
-        style="border:2px dashed #aab;border-radius:6px;text-align:center;margin-bottom:6px;background:#fafafa;"/>
-
-   <div id="dropPreviewNew"/>
    <!-- iDempiere WEditor fields are inserted here as a label+editor grid
         by RequestKanbanForm.buildNewRequestDialogEditors() -->
    <div id="requestDoc"/>
@@ -16,6 +12,9 @@
    <textbox id="txtSummary" hflex="1" rows="4"
             style="margin-top:2px;"
             placeholder="Enter request summary..."/>
+   <separator bar="false" spacing="4px"/>
+   <label value="For attachments, right-click on the request after saving."
+          style="font-size:11px;color:#888;font-style:italic;"/>
    <separator bar="false" spacing="6px"/>
    <hlayout spacing="6px" style="justify-content:flex-end;">
     <button id="btnCancel" label="Cancel"

@@ -90,9 +90,6 @@ public class RequestKanbanForm extends ADForm
     private Textbox          fUpdateResult;
     private Doublespinner    fSpinnerQuantity;
 
-    // Pending images dropped on the new-request dialog before save
-    private final java.util.List<org.zkoss.util.media.Media> pendingNewMedia = new java.util.ArrayList<>();
-
     // Cross-session real-time refresh (article pattern: capture desktop at init)
     private Desktop myDesktop;
     private EventHandler eventSubscriber;
@@ -468,53 +465,6 @@ public class RequestKanbanForm extends ADForm
             dialog.detach();
         });
 
-        // Wire drag-drop upload — save immediately since the request already exists
-        Div dropZone    = (Div) dialog.getFellow("dropZoneUpdate");
-        Div dropPreview = (Div) dialog.getFellow("dropPreviewUpdate");
-        if (dropZone != null) {
-            Button uploadBtn = new Button("📎 點擊或拖曳圖片至此上傳（立即儲存）");
-            uploadBtn.setUpload("true,maxsize=-1");
-            uploadBtn.setStyle("width:100%;border:none;background:none;color:#888;font-size:12px;padding:10px;cursor:pointer;");
-            dropZone.appendChild(uploadBtn);
-            uploadBtn.addEventListener(Events.ON_UPLOAD, ev -> {
-                org.zkoss.zk.ui.event.UploadEvent ue = (org.zkoss.zk.ui.event.UploadEvent) ev;
-                org.zkoss.util.media.Media[] medias = ue.getMedias();
-                if (medias == null) return;
-                boolean anyAdded = false;
-                try {
-                    org.compiere.model.MAttachment att =
-                        org.compiere.model.MAttachment.get(Env.getCtx(), MRequest.Table_ID, request.getR_Request_ID());
-                    if (att == null)
-                        att = new org.compiere.model.MAttachment(Env.getCtx(),
-                            MRequest.Table_ID, request.getR_Request_ID(), null);
-                    for (org.zkoss.util.media.Media m : medias) {
-                        if (m == null || m.getContentType() == null) continue;
-                        if (!m.getContentType().startsWith("image/")) {
-                            Clients.showNotification(
-                                m.getName() + " 不是圖片格式，略過。",
-                                Clients.NOTIFICATION_TYPE_WARNING, null, null, 3000);
-                            continue;
-                        }
-                        if (!m.isBinary()) continue;
-                        att.addEntry(m.getName(), m.getByteData());
-                        anyAdded = true;
-                        Label lbl = new Label("✓ " + m.getName());
-                        lbl.setStyle("font-size:11px;color:#2e7d32;display:block;");
-                        if (dropPreview != null) dropPreview.appendChild(lbl);
-                    }
-                    if (anyAdded) {
-                        att.save();
-                        dropZone.setStyle(dropZone.getStyle().replace("#fafafa", "#e8f5e9"));
-                        vm.broadcastRefresh();
-                    }
-                } catch (Exception ex) {
-                    log.log(Level.WARNING, "Update dialog onUpload failed", ex);
-                    Clients.showNotification(
-                        "上傳失敗：" + ex.getMessage(),
-                        Clients.NOTIFICATION_TYPE_ERROR, null, null, 4000);
-                }
-            });
-        }
     }
 
     private Hlayout makeFieldRow(String labelText, Component field) {
@@ -662,17 +612,10 @@ public class RequestKanbanForm extends ADForm
         Button btnCancel = (Button) dialog.getFellow("btnCancel");
         org.zkoss.zul.Textbox txtSummary =
             (org.zkoss.zul.Textbox) dialog.getFellow("txtSummary");
-        if (btnCancel != null) btnCancel.addEventListener(Events.ON_CLICK, e -> {
-            pendingNewMedia.clear();
-            dialog.detach();
-        });
+        if (btnCancel != null) btnCancel.addEventListener(Events.ON_CLICK, e -> dialog.detach());
         if (btnSave != null) btnSave.addEventListener(Events.ON_CLICK, e -> {
             String summary = txtSummary != null ? txtSummary.getValue().trim() : "";
-            int savedId = vm.saveNewRequest(fUser, fDoc, fPriority, fDepart, fSalesRep, fRole, fProject, summary);
-            if (savedId > 0 && !pendingNewMedia.isEmpty()) {
-                savePendingMediaToRequest(savedId);
-            }
-            pendingNewMedia.clear();
+            vm.saveNewRequest(fUser, fDoc, fPriority, fDepart, fSalesRep, fRole, fProject, summary);
             dialog.detach();
         });
     }
@@ -686,36 +629,6 @@ public class RequestKanbanForm extends ADForm
             Window dialog = (Window) Executions.createComponents("~./zul/request-new.zul", this, args);
             buildNewRequestDialogEditors(dialog);
             bindNewRequestButtons(dialog);
-            pendingNewMedia.clear();
-            Div dropZone    = (Div) dialog.getFellow("dropZoneNew");
-            Div dropPreview = (Div) dialog.getFellow("dropPreviewNew");
-            if (dropZone != null) {
-                Button uploadBtnNew = new Button("📎 點擊或拖曳圖片至此上傳（儲存後生效）");
-                uploadBtnNew.setUpload("true,maxsize=-1");
-                uploadBtnNew.setStyle("width:100%;border:none;background:none;color:#888;font-size:12px;padding:10px;cursor:pointer;");
-                dropZone.appendChild(uploadBtnNew);
-                uploadBtnNew.addEventListener(org.zkoss.zk.ui.event.Events.ON_UPLOAD, ev -> {
-                org.zkoss.zk.ui.event.UploadEvent ue = (org.zkoss.zk.ui.event.UploadEvent) ev;
-                org.zkoss.util.media.Media[] medias = ue.getMedias();
-                if (medias == null) return;
-                for (org.zkoss.util.media.Media m : medias) {
-                    if (m == null || m.getContentType() == null) continue;
-                    if (!m.getContentType().startsWith("image/")) {
-                        Clients.showNotification(
-                            m.getName() + " 不是圖片格式，略過。",
-                            Clients.NOTIFICATION_TYPE_WARNING, null, null, 3000);
-                        continue;
-                    }
-                    if (!m.isBinary()) continue;
-                    pendingNewMedia.add(m);
-                    Label lbl = new Label("✓ " + m.getName());
-                    lbl.setStyle("font-size:11px;color:#2e7d32;display:block;");
-                    if (dropPreview != null) dropPreview.appendChild(lbl);
-                }
-                if (!pendingNewMedia.isEmpty() && dropZone != null)
-                    dropZone.setStyle(dropZone.getStyle().replace("#fafafa", "#e8f5e9"));
-                });
-            }
             dialog.doModal();
         } catch (Exception e) {
             log.warning("Cannot open new request dialog: " + e.getMessage());
@@ -849,26 +762,6 @@ public class RequestKanbanForm extends ADForm
             vm.onGanttDrop(Integer.parseInt(String.valueOf(reqObj)),
                            Integer.parseInt(String.valueOf(projObj)));
         });
-    }
-
-    private void savePendingMediaToRequest(int requestId) {
-        try {
-            org.compiere.model.MAttachment att =
-                org.compiere.model.MAttachment.get(Env.getCtx(), MRequest.Table_ID, requestId);
-            if (att == null) {
-                att = new org.compiere.model.MAttachment(Env.getCtx(), MRequest.Table_ID, requestId, null);
-            }
-            for (org.zkoss.util.media.Media m : pendingNewMedia) {
-                try {
-                    att.addEntry(m.getName(), m.getByteData());
-                } catch (Exception ex) {
-                    log.warning("savePendingMediaToRequest: could not add " + m.getName() + ": " + ex.getMessage());
-                }
-            }
-            att.save();
-        } catch (Exception ex) {
-            log.log(Level.WARNING, "savePendingMediaToRequest failed for R_Request_ID=" + requestId, ex);
-        }
     }
 
     private void registerOsgiEventHandler() {
