@@ -24,6 +24,7 @@ import org.adempiere.webui.event.ValueChangeListener;
 import org.adempiere.webui.panel.ADForm;
 import org.adempiere.webui.panel.IFormController;
 import org.adempiere.webui.panel.WAttachment;
+import org.compiere.model.MAttachment;
 import org.compiere.model.MColumn;
 import org.compiere.model.MLookup;
 import org.compiere.model.MLookupFactory;
@@ -214,11 +215,8 @@ public class RequestKanbanForm extends ADForm
             wa.doModal();
         });
         attachRow.appendChild(btnManageAttach);
-        int attachCount = DB.getSQLValue(null,
-            "SELECT COUNT(*) FROM AD_AttachmentEntry e"
-            + " JOIN AD_Attachment a ON a.AD_Attachment_ID=e.AD_Attachment_ID"
-            + " WHERE a.AD_Table_ID=? AND a.Record_ID=?",
-            MRequest.Table_ID, request.getR_Request_ID());
+        MAttachment mAttach = MAttachment.get(Env.getCtx(), MRequest.Table_ID, request.getR_Request_ID());
+        int attachCount = (mAttach != null) ? mAttach.getEntries().length : 0;
         if (attachCount > 0) {
             Label lblCount = new Label("(" + attachCount + ")");
             lblCount.setStyle("font-weight:bold;color:#336699;");
