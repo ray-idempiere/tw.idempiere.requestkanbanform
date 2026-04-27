@@ -215,7 +215,9 @@ public class RequestKanbanForm extends ADForm
         });
         attachRow.appendChild(btnManageAttach);
         int attachCount = DB.getSQLValue(null,
-            "SELECT COUNT(*) FROM AD_Attachment WHERE AD_Table_ID=? AND Record_ID=?",
+            "SELECT COUNT(*) FROM AD_AttachmentEntry e"
+            + " JOIN AD_Attachment a ON a.AD_Attachment_ID=e.AD_Attachment_ID"
+            + " WHERE a.AD_Table_ID=? AND a.Record_ID=?",
             MRequest.Table_ID, request.getR_Request_ID());
         if (attachCount > 0) {
             Label lblCount = new Label("(" + attachCount + ")");

@@ -87,7 +87,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 | New DB Columns | 0 |
 | iDempiere Version | 12 |
 | Build System | Maven (Tycho) |
-| Plugin Version | 3.1.0 |
+| Plugin Version | 3.1.1 |
 
 **Status Icon Resolution** — On form init, `loadStatusIcons()` iterates all `R_Status` records and calls `MAttachment.get(ctx, 776, statusId)`. If an image entry (`isGraphic()` → `.png/.jpg/.gif`) is found, it is encoded as a Base64 data URI and cached in memory. The ZUL binds `visible` and `src` to `hasStatusIcon()` / `getStatusIconUrl()` on the ViewModel. Size: 16×16 with `object-fit:contain`. See [`docs/technical-guide-status-icon.md`](docs/technical-guide-status-icon.md) for full details.
 
@@ -142,6 +142,9 @@ Click your own avatar in the top-right toolbar to open the Attachment dialog. Up
 ---
 
 ### 📋 Changelog
+
+#### 2026-04-27 — v3.1.1
+- **Fix attachment count in edit dialog** — The attachment count badge `(N)` in the Request edit dialog now correctly reflects the number of individual files. Previously, the count was queried from `AD_Attachment` (one row per record) and always showed `(1)`; it now queries `AD_AttachmentEntry` for the true file count.
 
 #### 2026-04-23 — v3.1.0
 - **Kanban card image thumbnail banner** — If a request has an image attachment (PNG/JPG/GIF), the first image is rendered as a full-width 100 px Trello-style banner at the top of its Kanban card. Banner images are loaded via `MAttachment` / `MAttachmentEntry` and encoded as Base64 data URIs. Capped at the top 20 requests with attachments per refresh (sorted Priority ASC, StartDate DESC); cards beyond the cap show the paperclip icon only. No new DB columns required.
