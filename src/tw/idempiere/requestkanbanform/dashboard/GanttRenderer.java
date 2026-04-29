@@ -46,14 +46,14 @@ public class GanttRenderer {
 		if (statuses != null) {
 			for (MStatus s : statuses) {
 				if (s.getR_Status_ID() == statusId) {
-					switch (s.getValue()) {
-						case "Open":       return new String[]{"#3b82f6", "#ffffff"};
-						case "Processing": return new String[]{"#f59e0b", "#ffffff"};
-						case "Verify":     return new String[]{"#10b981", "#ffffff"};
-						case "Problem":    return new String[]{"#ef4444", "#ffffff"};
-						case "Closed":     return new String[]{"#9ca3af", "#ffffff"};
-						default:           return new String[]{"#9ca3af", "#ffffff"};
-					}
+					if (s.isClosed())
+						return new String[]{"#9ca3af", "#ffffff"}; // 已關閉 → 灰色
+					if (s.isDefault())
+						return new String[]{"#3b82f6", "#ffffff"}; // 預設(Open) → 藍色
+					String v = s.getValue();
+					if ("Verify".equals(v) || "Review".equals(v))
+						return new String[]{"#10b981", "#ffffff"}; // 驗收/審查 → 綠色
+					return new String[]{"#f59e0b", "#ffffff"};     // 其他進行中 → 黃色
 				}
 			}
 		}

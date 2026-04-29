@@ -11,6 +11,12 @@
 
 ---
 
+## 🎬 Tutorial Videos
+
+▶ **English Playlist** — [youtube.com/playlist?list=PLeS966H3oFaE9Pzuh2mHdEpdsAN3k2m6a](https://www.youtube.com/playlist?list=PLeS966H3oFaE9Pzuh2mHdEpdsAN3k2m6a)
+
+---
+
 ## 📸 Screenshots
 
 | Kanban View | Gantt View |
@@ -87,7 +93,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 | New DB Columns | 0 |
 | iDempiere Version | 12 |
 | Build System | Maven (Tycho) |
-| Plugin Version | 3.1.2 |
+| Plugin Version | 3.1.3 |
 
 **Status Icon Resolution** — On form init, `loadStatusIcons()` iterates all `R_Status` records and calls `MAttachment.get(ctx, 776, statusId)`. If an image entry (`isGraphic()` → `.png/.jpg/.gif`) is found, it is encoded as a Base64 data URI and cached in memory. The ZUL binds `visible` and `src` to `hasStatusIcon()` / `getStatusIconUrl()` on the ViewModel. Size: 16×16 with `object-fit:contain`. See [`docs/technical-guide-status-icon.md`](docs/technical-guide-status-icon.md) for full details.
 
@@ -142,6 +148,9 @@ Click your own avatar in the top-right toolbar to open the Attachment dialog. Up
 ---
 
 ### 📋 Changelog
+
+#### 2026-04-29 — v3.1.3
+- **Gantt bar color fix** — Bar colors are now derived from `MStatus.isClosed()` and `isDefault()` flags instead of hardcoded `Value` string matching. `isClosed=Y` → grey; `isDefault=Y` → blue (Open); `Value` is `"Verify"` or `"Review"` → green; all other active statuses → yellow. This fixes environments where status values differ from the expected strings (e.g. `"In Progress"` instead of `"Processing"`).
 
 #### 2026-04-27 — v3.1.1
 - **Fix attachment count in edit dialog** — The attachment count badge `(N)` in the Request edit dialog now correctly reflects the number of individual files. Previously, the count was queried from `AD_Attachment` (one row per record) and always showed `(1)`; it now queries `AD_AttachmentEntry` for the true file count.
@@ -247,6 +256,12 @@ GPL-2.0-only. Share and share alike.
 
 ## 🌐 中文版
 
+## 🎬 教學影片
+
+▶ **中文教學播放清單** — [youtube.com/playlist?list=PLXQAdf2Puuyevr4EOyRyS6OQZ5S7pBddW](https://www.youtube.com/playlist?list=PLXQAdf2Puuyevr4EOyRyS6OQZ5S7pBddW)
+
+---
+
 > **太史公曰：** 自古請求如恆河之沙，數之不盡，管之不易。或藏於資料庫深處，或迷失於 Window 介面之汪洋，負責人曰「我不知道」，主管曰「怎麼又卡住了」，申請人曰「我上週就填了啊」。三者相望於江湖，皆不得要領。
 >
 > 於是乎，看板降世。從此，請求有所歸，狀態有所顯，每週站會終於可以在十分鐘內結束。此誠 ERP 管理之一大德政也。
@@ -314,7 +329,7 @@ GPL-2.0-only. Share and share alike.
 | 新增欄位 | 0 |
 | iDempiere 版本 | 12 |
 | 建置工具 | Maven Tycho |
-| 外掛版本 | 3.1.0 |
+| 外掛版本 | 3.1.3 |
 
 **狀態 Icon 解析邏輯** — 表單 init 時，`loadStatusIcons()` 為每個 `R_Status_ID` 呼叫 `MAttachment.get(ctx, 776, statusId)`，找到第一個圖檔（`isGraphic()`）後轉為 Base64 data URI 快取。ZUL 透過 `hasStatusIcon()` / `getStatusIconUrl()` 綁定顯示，16×16，`object-fit:contain`。詳見 [技術文件](docs/technical-guide-status-icon.md)。
 
@@ -371,6 +386,9 @@ GPL-2.0-only. Share and share alike.
 ---
 
 ### 📋 更新記錄
+
+#### 2026-04-29 — v3.1.3
+- **甘特圖顏色修正** — 長條顏色改由 `MStatus.isClosed()` 與 `isDefault()` 旗標決定，不再 hardcode 比對 `Value` 字串。`isClosed=Y` → 灰色；`isDefault=Y` → 藍色（Open）；Value 為 `"Verify"` 或 `"Review"` → 綠色；其餘進行中狀態 → 黃色。修正在不同資料庫環境中狀態值不同（如 `"In Progress"` 而非 `"Processing"`）導致所有長條顯示灰色的問題。
 
 #### 2026-04-23 — v3.1.0
 - **看板卡片圖片縮圖橫幅** — 若請求有圖片附件（PNG/JPG/GIF），第一張圖片以全寬 100px Trello 風格橫幅顯示於卡片頂端。圖片透過 `MAttachment` / `MAttachmentEntry` 讀取並編碼為 Base64 data URI。每次刷新最多處理前 20 筆有附件的請求（依優先權升冪、起始日期降冪），超過上限的卡片僅顯示迴紋針圖示。無需新增資料表或欄位。
