@@ -52,6 +52,20 @@
         <translation language="zh_TW"><field name="MsgText" type="String">請求內容說明</field></translation>
       </row>
       <row>
+        <field name="Value" type="String">RK_SummaryPlaceholder</field>
+        <field name="MsgText" type="String">Enter request summary...</field>
+        <field name="MsgType" type="String">I</field>
+        <field name="EntityType" type="String">U</field>
+        <translation language="zh_TW"><field name="MsgText" type="String">輸入請求內容，愈詳細愈好....</field></translation>
+      </row>
+      <row>
+        <field name="Value" type="String">RK_Project</field>
+        <field name="MsgText" type="String">Project:</field>
+        <field name="MsgType" type="String">I</field>
+        <field name="EntityType" type="String">U</field>
+        <translation language="zh_TW"><field name="MsgText" type="String">專案:</field></translation>
+      </row>
+      <row>
         <field name="Value" type="String">RK_SaveAndClose</field>
         <field name="MsgText" type="String">Save and Close</field>
         <field name="MsgType" type="String">I</field>

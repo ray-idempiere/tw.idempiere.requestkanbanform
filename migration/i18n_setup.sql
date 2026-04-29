@@ -61,8 +61,10 @@ FROM (VALUES
     ('RK_ProjectSaveError',      'Failed to save project',   'E'),
     ('RK_NoProjects',            '(No projects)',            'I'),
     ('RK_RequestNotFound',       'Request not found',        'E'),
-    ('RK_Members',   'Members',    'I'),
-    ('RK_AddMember', '+ Member',   'I')
+    ('RK_Members',            'Members',                    'I'),
+    ('RK_AddMember',          '+ Member',                   'I'),
+    ('RK_SummaryPlaceholder', 'Enter request summary...',   'I'),
+    ('RK_Project',            'Project:',                   'I')
 ) AS v(val, msg, type);
 
 INSERT INTO AD_Message_Trl (AD_Message_ID, AD_Language, AD_Client_ID, AD_Org_ID, IsActive, Created, CreatedBy, Updated, UpdatedBy, MsgText, MsgTip, IsTranslated)
@@ -125,7 +127,9 @@ SELECT AD_Message_ID, 'zh_TW', 0, 0, 'Y', now(), 100, now(), 100,
         WHEN 'RK_ProjectSaveError' THEN '專案儲存失敗'
         WHEN 'RK_NoProjects' THEN '(尚無專案)'
         WHEN 'RK_RequestNotFound' THEN '找不到請求'
-        WHEN 'RK_Members'   THEN '成員'
-        WHEN 'RK_AddMember' THEN '+ 成員'
+        WHEN 'RK_Members'            THEN '成員'
+        WHEN 'RK_AddMember'          THEN '+ 成員'
+        WHEN 'RK_SummaryPlaceholder' THEN '輸入請求內容，愈詳細愈好....'
+        WHEN 'RK_Project'            THEN '專案:'
     END, NULL, 'Y'
 FROM AD_Message WHERE Value LIKE 'RK_%';

@@ -585,13 +585,13 @@ public class RequestKanbanForm extends ADForm
         grid.appendChild(cols);
 
         Rows rows = new Rows();
-        rows.appendChild(makeRow("Requester:",         fUser.getComponent()));
-        rows.appendChild(makeRow("Priority:",          fPriority.getComponent()));
-        rows.appendChild(makeRow("Department:",        fDepart.getComponent()));
-        rows.appendChild(makeRow("Type:",              fDoc.getComponent()));
-        rows.appendChild(makeRow("Sales Rep:",         fSalesRep.getComponent()));
-        rows.appendChild(makeRow("Responsible Role/Team:", fRole.getComponent()));
-        rows.appendChild(makeRow("Project:",           fProject.getComponent()));
+        rows.appendChild(makeRow(Msg.getMsg(Env.getCtx(), "RK_Requester"),        fUser.getComponent()));
+        rows.appendChild(makeRow(Msg.getMsg(Env.getCtx(), "RK_Priority"),         fPriority.getComponent()));
+        rows.appendChild(makeRow(Msg.getMsg(Env.getCtx(), "RK_Department"),       fDepart.getComponent()));
+        rows.appendChild(makeRow(Msg.getMsg(Env.getCtx(), "RK_Type"),             fDoc.getComponent()));
+        rows.appendChild(makeRow(Msg.getMsg(Env.getCtx(), "RK_SalesRep"),         fSalesRep.getComponent()));
+        rows.appendChild(makeRow(Msg.getMsg(Env.getCtx(), "RK_ResponsibleRole"),  fRole.getComponent()));
+        rows.appendChild(makeRow(Msg.getMsg(Env.getCtx(), "RK_Project"),          fProject.getComponent()));
         grid.appendChild(rows);
 
         container.appendChild(grid);
@@ -627,6 +627,14 @@ public class RequestKanbanForm extends ADForm
             t.setContextClassLoader(getClass().getClassLoader());
             Map<String, Object> args = new HashMap<>();
             Window dialog = (Window) Executions.createComponents("~./zul/request-new.zul", this, args);
+            dialog.setTitle(Msg.getMsg(Env.getCtx(), "RK_RequestFormTitle"));
+            if (dialog.hasFellow("lblSummaryTitle"))
+                ((Label) dialog.getFellow("lblSummaryTitle")).setValue(Msg.getMsg(Env.getCtx(), "RK_SummaryLabel"));
+            if (dialog.hasFellow("lblAttachHint"))
+                ((Label) dialog.getFellow("lblAttachHint")).setValue(Msg.getMsg(Env.getCtx(), "RK_AttachmentHint"));
+            ((org.zkoss.zul.Textbox) dialog.getFellow("txtSummary")).setPlaceholder(Msg.getMsg(Env.getCtx(), "RK_SummaryPlaceholder"));
+            ((Button) dialog.getFellow("btnSave")).setLabel(Msg.getMsg(Env.getCtx(), "RK_SaveAndClose"));
+            ((Button) dialog.getFellow("btnCancel")).setLabel(Msg.getMsg(Env.getCtx(), "RK_Cancel"));
             buildNewRequestDialogEditors(dialog);
             bindNewRequestButtons(dialog);
             dialog.doModal();

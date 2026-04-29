@@ -87,7 +87,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 | New DB Columns | 0 |
 | iDempiere Version | 12 |
 | Build System | Maven (Tycho) |
-| Plugin Version | 3.1.1 |
+| Plugin Version | 3.1.2 |
 
 **Status Icon Resolution** — On form init, `loadStatusIcons()` iterates all `R_Status` records and calls `MAttachment.get(ctx, 776, statusId)`. If an image entry (`isGraphic()` → `.png/.jpg/.gif`) is found, it is encoded as a Base64 data URI and cached in memory. The ZUL binds `visible` and `src` to `hasStatusIcon()` / `getStatusIconUrl()` on the ViewModel. Size: 16×16 with `object-fit:contain`. See [`docs/technical-guide-status-icon.md`](docs/technical-guide-status-icon.md) for full details.
 

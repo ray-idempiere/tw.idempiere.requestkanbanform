@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <zk>
- <window title="Request Application"
+ <window id="newRequestWin" title="Request Application"
          position="center,center" closable="true"
          border="normal" width="560px" height="auto">
   <vlayout spacing="0" style="padding:8px;">
@@ -8,12 +8,12 @@
         by RequestKanbanForm.buildNewRequestDialogEditors() -->
    <div id="requestDoc"/>
    <separator bar="false" spacing="4px"/>
-   <label value="Request Summary" style="font-size:12px;font-weight:bold;color:#333;"/>
+   <label id="lblSummaryTitle" value="Request Summary" style="font-size:12px;font-weight:bold;color:#333;"/>
    <textbox id="txtSummary" hflex="1" rows="4"
             style="margin-top:2px;"
             placeholder="Enter request summary..."/>
    <separator bar="false" spacing="4px"/>
-   <label value="For attachments, right-click on the request after saving."
+   <label id="lblAttachHint" value="For attachments, right-click on the request after saving."
           style="font-size:11px;color:#888;font-style:italic;"/>
    <separator bar="false" spacing="6px"/>
    <hlayout spacing="6px" style="justify-content:flex-end;">
