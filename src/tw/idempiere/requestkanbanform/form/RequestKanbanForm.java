@@ -52,6 +52,7 @@ import org.zkoss.zul.Div;
 import org.zkoss.zul.Doublespinner;
 import org.zkoss.zul.Grid;
 import org.zkoss.zul.Hlayout;
+import org.zkoss.zul.Html;
 import org.zkoss.zul.Label;
 import org.zkoss.zul.Listbox;
 import org.zkoss.zul.Listcell;
@@ -328,13 +329,13 @@ public class RequestKanbanForm extends ADForm
         sec2.setStyle("font-size:11px;font-weight:700;color:#888;letter-spacing:0.5px;margin:10px 0 4px;");
         requestDoc.appendChild(sec2);
 
-        Textbox summaryTxt = new Textbox(request.getSummary());
-        summaryTxt.setMultiline(true);
-        summaryTxt.setHeight("80px");
-        summaryTxt.setHflex("1");
-        summaryTxt.setDisabled(true);
-        summaryTxt.setStyle("background-color:rgba(255,255,128,.5);opacity:1;color:#333;");
-        requestDoc.appendChild(summaryTxt);
+        Html summaryHtml = new Html();
+        summaryHtml.setContent(linkifyHtml(request.getSummary()));
+        summaryHtml.setStyle("display:block;background-color:rgba(255,255,128,.5);color:#333;" +
+            "padding:4px 6px;border:1px solid #ccc;border-radius:3px;" +
+            "min-height:40px;max-height:80px;overflow-y:auto;width:100%;box-sizing:border-box;" +
+            "white-space:pre-wrap;word-break:break-word;");
+        requestDoc.appendChild(summaryHtml);
 
         // ── 💬 Update Message ─────────────────────────────────────
         Label sec3 = new Label("💬 " + Msg.getMsg(Env.getCtx(), "RK_UpdateMessage"));
@@ -372,7 +373,10 @@ public class RequestKanbanForm extends ADForm
                 Label lblMeta = new Label(userName + " · " + sdf.format(upd.getUpdated()));
                 lblMeta.setStyle("color:#888;font-size:11px;");
                 content.appendChild(lblMeta);
-                content.appendChild(new Label(upd.getResult()));
+                Html msgHtml = new Html();
+                msgHtml.setContent(linkifyHtml(upd.getResult()));
+                msgHtml.setStyle("word-break:break-word;white-space:pre-wrap;");
+                content.appendChild(msgHtml);
                 if (upd.getQtySpent() != null && upd.getQtySpent().floatValue() != 0) {
                     String unit = upd.getQtySpent().floatValue() > 1 ? "Hours" : "Hour";
                     Label lblQty = new Label("[" + upd.getM_ProductSpent().getValue()
@@ -465,6 +469,20 @@ public class RequestKanbanForm extends ADForm
             dialog.detach();
         });
 
+    }
+
+    private static String linkifyHtml(String text) {
+        if (text == null) return "";
+        String escaped = text
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;");
+        escaped = escaped.replace("\n", "<br/>");
+        escaped = escaped.replaceAll(
+            "(https?://[\\w\\-._~:/?#\\[\\]@!$&'()*+,;=%]+)",
+            "<a href=\"$1\" target=\"_blank\" style=\"color:#1565c0;text-decoration:underline;\">$1</a>");
+        return escaped;
     }
 
     private Hlayout makeFieldRow(String labelText, Component field) {
