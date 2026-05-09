@@ -145,7 +145,10 @@ public class RequestKanbanForm extends ADForm
 
         boolean canEdit = vm.canEditRequest(request);
         boolean isSupervisor = vm.isSupervisorOf(request.getAD_User_ID());
-        boolean canEditAny = canEdit || isSupervisor;
+        boolean isSalesRepSupervisor = vm.isSupervisorOfSalesRep(request);
+        boolean canEditAny = canEdit || isSupervisor || isSalesRepSupervisor;
+        boolean isMember = vm.isMember(request.getR_Request_ID());
+        boolean canWriteUpdate = canEditAny || isMember;
 
         // ── 📋 Basic Info ─────────────────────────────────────────
         Label sec1 = new Label("📋 " + Msg.getMsg(Env.getCtx(), "RK_BasicInfo"));
@@ -160,7 +163,7 @@ public class RequestKanbanForm extends ADForm
         requesterTxt.setStyle("opacity:1;color:#333;");
         requestDoc.appendChild(makeFieldRow(Msg.getMsg(Env.getCtx(), "RK_Requester"), requesterTxt));
 
-        // Priority — only supervisor can edit
+        // Priority — only requester's supervisor can edit
         MLookup priorityL = MLookupFactory.get(Env.getCtx(), 0, 0, 5426, DisplayType.List);
         fUpdatePriority = new WTableDirEditor("Priority", false, false, true, priorityL);
         fUpdatePriority.setMandatory(true);
@@ -398,11 +401,11 @@ public class RequestKanbanForm extends ADForm
         fUpdateResult.setRows(3);
         fUpdateResult.setMultiline(true);
         fUpdateResult.setHflex("1");
-        fUpdateResult.setReadonly(!canEditAny);
+        fUpdateResult.setReadonly(!canEditAny && !isMember);
         requestDoc.appendChild(fUpdateResult);
 
-        // Product / Quantity (only when canEditAny)
-        if (canEditAny) {
+         // Product / Quantity — only SalesRep本人 or SalesRep主管
+        if (canEdit || isSalesRepSupervisor) {
             MLookup productL = MLookupFactory.get(Env.getCtx(), 0, 0, 13497, DisplayType.Search);
             fProductSpent = new WSearchEditor("M_ProductSpent_ID", false, false, true, productL);
             fProductSpent.setValue(MColumn.get(Env.getCtx(), 13497).getDefaultValue());
@@ -419,7 +422,7 @@ public class RequestKanbanForm extends ADForm
         // ── Buttons ───────────────────────────────────────────────
         Button btnSave = (Button) dialog.getFellow("closeBtn");
         btnSave.setLabel(Msg.getMsg(Env.getCtx(), "RK_SaveAndClose"));
-        btnSave.setDisabled(!canEditAny);
+        btnSave.setDisabled(!canWriteUpdate);
         btnSave.addEventListener(Events.ON_CLICK, e -> {
             if (fUpdatePriority.getValue() == null) {
                 Clients.showNotification(Msg.getMsg(Env.getCtx(), "RK_PriorityMandatory"));

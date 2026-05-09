@@ -93,7 +93,7 @@ No new database tables. No new columns. We are guests in iDempiere's house and w
 | New DB Columns | 0 |
 | iDempiere Version | 12 |
 | Build System | Maven (Tycho) |
-| Plugin Version | 3.1.4 |
+| Plugin Version | 3.1.5 |
 
 **Status Icon Resolution** — On form init, `loadStatusIcons()` iterates all `R_Status` records and calls `MAttachment.get(ctx, 776, statusId)`. If an image entry (`isGraphic()` → `.png/.jpg/.gif`) is found, it is encoded as a Base64 data URI and cached in memory. The ZUL binds `visible` and `src` to `hasStatusIcon()` / `getStatusIconUrl()` on the ViewModel. Size: 16×16 with `object-fit:contain`. See [`docs/technical-guide-status-icon.md`](docs/technical-guide-status-icon.md) for full details.
 
@@ -148,6 +148,12 @@ Click your own avatar in the top-right toolbar to open the Attachment dialog. Up
 ---
 
 ### 📋 Changelog
+#### 2026-05-09 — v3.1.5
+- **SalesRep supervisor permissions** — SalesRep's supervisor can now edit SalesRep_ID (responsible person), StartTime, EndTime, Update Result, and Product/Quantity in the request dialog (previously restricted to SalesRep only). Members with `isMember` access can now write update results without editing fields.
+- **URLs in dialogs open in new tab** — Clickable URLs in Summary field and Update History messages within the Request Update dialog now open in a new browser tab. Previously they opened in the same tab, losing context.
+- **Gantt bar colors fixed** — Bar background colors are derived from `MStatus.isClosed()` and `isDefault()` flags instead of hardcoded value matching. Fixes environments where status values differ (e.g. `"In Progress"` vs `"Processing"`).
+- **New Request form i18n** — All labels in the New Request dialog are now translated via message keys.
+
 
 #### 2026-05-07 — v3.1.4
 - **Clickable URLs in Summary and Update History** — `https://` and `http://` URLs in the Summary field and Update History messages are now automatically rendered as clickable links that open in a new browser tab.
@@ -332,7 +338,7 @@ GPL-2.0-only. Share and share alike.
 | 新增欄位 | 0 |
 | iDempiere 版本 | 12 |
 | 建置工具 | Maven Tycho |
-| 外掛版本 | 3.1.4 |
+| 外掛版本 | 3.1.5 |
 
 **狀態 Icon 解析邏輯** — 表單 init 時，`loadStatusIcons()` 為每個 `R_Status_ID` 呼叫 `MAttachment.get(ctx, 776, statusId)`，找到第一個圖檔（`isGraphic()`）後轉為 Base64 data URI 快取。ZUL 透過 `hasStatusIcon()` / `getStatusIconUrl()` 綁定顯示，16×16，`object-fit:contain`。詳見 [技術文件](docs/technical-guide-status-icon.md)。
 
@@ -389,6 +395,12 @@ GPL-2.0-only. Share and share alike.
 ---
 
 ### 📋 更新記錄
+#### 2026-05-09 — v3.1.5
+- **SalesRep 主管編輯權限** — SalesRep 的主管現可編輯負責人（SalesRep_ID）、起訖時間、更新結果與產品工時（原僅限 SalesRep）。IsMember 成員可填寫更新結果，無需其他欄位編輯權限。
+- **對話框內 URL 新分頁開啟** — 請求更新對話框中 Summary 欄位及更新歷程的 URL，點擊後於新分頁開啟，不再覆蓋當前工作階段。
+- **甘特圖長條顏色修正** — 長條底色改由 `MStatus.isClosed()` 與 `isDefault()` 旗標決定，修正在不同狀態值環境中的顯示問題。
+- **新建請求表單多國語系** — 新建對話框所有標籤均改為訊息鍵值翻譯。
+
 
 #### 2026-05-07 — v3.1.4
 - **摘要與更新記錄超連結** — Summary 欄位及 Update History 訊息中的 `https://` / `http://` 網址，現在會自動渲染為可點擊連結，點擊後在新分頁開啟。

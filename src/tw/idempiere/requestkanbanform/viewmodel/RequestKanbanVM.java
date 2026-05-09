@@ -1325,6 +1325,16 @@ public class RequestKanbanVM {
         return request.getSalesRep_ID() == userId || request.getAD_User_ID() == userId;
     }
 
+    /** Returns true if the current user is the SalesRep's direct supervisor. */
+    public boolean isSupervisorOfSalesRep(MRequest request) {
+        int userId = Env.getAD_User_ID(Env.getCtx());
+        int salesRepId = request.getSalesRep_ID();
+        if (salesRepId <= 0) return false;
+        int supervisorId = DB.getSQLValue(null,
+             "SELECT supervisor_id FROM ad_user WHERE ad_user_id = ?", salesRepId);
+        return supervisorId == userId;
+    }
+
     public boolean isMember(int requestId) {
         int userId = Env.getAD_User_ID(Env.getCtx());
         return DB.getSQLValue(null,
