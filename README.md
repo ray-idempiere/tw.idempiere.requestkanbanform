@@ -147,6 +147,65 @@ Click your own avatar in the top-right toolbar to open the Attachment dialog. Up
 
 ---
 
+### 🔐 Roles & Permissions
+
+#### Core Permission Flags
+
+| Flag | Definition | Source |
+|------|-----------|--------|
+| `canEdit` | `SalesRep_ID == currentUser \|\| AD_User_ID == currentUser` | VM:1323 |
+| `isSupervisor` | currentUser is the **Requester**'s supervisor | VM:357-364 |
+| `isSalesRepSupervisor` | currentUser is the **SalesRep**'s supervisor | VM:1329-1335 |
+| `canEditAny` | `canEdit \|\| isSupervisor \|\| isSalesRepSupervisor` | Form:149 |
+| `canWriteUpdate` | `canEditAny \|\| isMember` | Form:151 |
+| `isMember` | currentUser is linked via `r_requestupdates` | VM:1338 |
+
+#### Field Edit Permissions
+
+| Field | Requester | SalesRep | Requester Sup. | SalesRep Sup. | Member | Other |
+|-------|:---------:|:--------:|:--------------:|:-------------:|:------:|:-----:|
+| **Requester** | 🔒 RO | 🔒 RO | 🔒 RO | 🔒 RO | 🔒 RO | 🔒 RO |
+| **Priority** | ✏️ N/A | ✏️ N/A | ✏️ **Editable** | ❌ | ❌ | ❌ |
+| **SalesRep_ID** | ❌ | ❌ | ❌ | ✏️ **Editable** | ❌ | ❌ |
+| **StartTime** | ❌ | ✏️ | ✏️ | ✏️ | ❌ | ❌ |
+| **EndTime** | ❌ | ✏️ | ✏️ | ✏️ | ❌ | ❌ |
+| **Update Result** | ✏️ | ✏️ | ✏️ | ✏️ | ✏️ **Write** | ❌ |
+| **Product/Qty** | ❌ | ✏️ **Self** | ❌ | ✏️ **SalesRep Sup.** | ❌ | ❌ |
+
+#### Operation Permissions
+
+| Action | Requester | SalesRep | Req. Sup. | Sr. Sup. | Member | Other |
+|-------|:---------:|:--------:|:---------:|:--------:|:------:|:-----:|
+| **Drag card to change status** | ✏️ | ✏️ | ❌ | ❌ | ❌ | ❌ |
+| **Open & edit card** | ✏️ | ✏️ | ✏️ | ✏️ | RO | RO |
+| **Add member** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Remove member** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Create new request** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+#### Permission Derivation Flow
+
+```
+Is currentUser the Requester or SalesRep?
+  ├── Yes → canEdit=true
+  └── No  → canEdit=false
+
+canEditAny = canEdit || isRequesterSupervisor || isSalesRepSupervisor
+
+canWriteUpdate = canEditAny || isMember
+```
+
+#### Legend
+
+| Symbol | Meaning |
+|--------|---------|
+| ✏️ | Editable |
+| 🔒 | Read-only display |
+| ❌ | Not available / no access |
+| ✓ | Can perform |
+| ✅ | Requires `canEditAny` condition |
+
+---
+
 ### 📋 Changelog
 #### 2026-05-09 — v3.1.5
 - **SalesRep supervisor permissions** — SalesRep's supervisor can now edit SalesRep_ID (responsible person), StartTime, EndTime, Update Result, and Product/Quantity in the request dialog (previously restricted to SalesRep only). Members with `isMember` access can now write update results without editing fields.
@@ -391,6 +450,65 @@ GPL-2.0-only. Share and share alike.
 
 **個人大頭照**
 點擊工具列右上角自己的頭像，開啟附件對話框，上傳 PNG 或 JPG。關閉對話框後頭像立即更新，下次看板刷新後所有卡片上也會同步顯示。
+
+---
+
+### 🔐 角色與權限
+
+#### 核心判定旗標
+
+| 旗標 | 定義 | 原始碼 |
+|------|------|------|
+| `canEdit` | `SalesRep_ID == currentUser \|\| AD_User_ID == currentUser` | VM:1323 |
+| `isSupervisor` | currentUser 是 **申請人** 的主管 | VM:357-364 |
+| `isSalesRepSupervisor` | currentUser 是 **SalesRep** 的主管 | VM:1329-1335 |
+| `canEditAny` | `canEdit \|\| isSupervisor \|\| isSalesRepSupervisor` | Form:149 |
+| `canWriteUpdate` | `canEditAny \|\| isMember` | Form:151 |
+| `isMember` | currentUser 透過 `r_requestupdates` 關聯至此請求 | VM:1338 |
+
+#### 欄位編輯權限
+
+| 欄位 | Requester | SalesRep | Requester Sup. | SalesRep Sup. | Member | 其他 |
+|------|:---------:|:--------:|:------:---------:|:-----:---------:|:------:|:---:|
+| **申請人** | 🔒 唯讀 | 🔒 唯讀 | 🔒 唯讀 | 🔒 唯讀 | 🔒 唯讀 | 🔒 唯讀 |
+| **優先權** | ✏️ 不可編 | ✏️ 不可編 | ✏️ **可編輯** | ❌ | ❌ | ❌ |
+| **負責人 (SalesRep_ID)** | ❌ | ❌ | ❌ | ✏️ **可編輯** | ❌ | ❌ |
+| **起始時間 (StartTime)** | ❌ | ✏️ | ✏️ | ✏️ | ❌ | ❌ |
+| **結束時間 (EndTime)** | ❌ | ✏️ | ✏️ | ✏️ | ❌ | ❌ |
+| **更新結果** | ✏️ | ✏️ | ✏️ | ✏️ | ✏️ **可寫入** | ❌ |
+| **產品/工時** | ❌ | ✏️ **本人** | ❌ | ✏️ **SalesRep主管** | ❌ | ❌ |
+
+#### 操作權限
+
+| 操作 | Requester | SalesRep | Req. Sup. | Sr. Sup. | Member | 其他 |
+|------|:---------:|:--------:|:-------:--:|:-------:--:|:------:|:---:|
+| **拖放卡片改狀態** | ✏️ | ✏️ | ❌ | ❌ | ❌ | ❌ |
+| **點開卡片編輯** | ✏️ | ✏️ | ✏️ | ✏️ | 唯讀 | 唯讀 |
+| **新增成員** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **移除成員** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **建立新請求** | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+
+#### 權限判定流程
+
+```
+currentUser 是申請人或 SalesRep 嗎？
+  ├── 是 → canEdit=true
+  └── 否 → canEdit=false
+
+canEditAny = canEdit || isRequesterSupervisor || isSalesRepSupervisor
+
+canWriteUpdate = canEditAny || isMember
+```
+
+#### 圖例
+
+| 符號 | 意義 |
+|------|------|
+| ✏️ | 可編輯 |
+| 🔒 | 唯讀顯示 |
+| ❌ | 不可用 / 無權限 |
+| ✓ | 可執行 |
+| ✅ | 需 `canEditAny` 條件 |
 
 ---
 
