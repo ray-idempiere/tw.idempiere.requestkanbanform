@@ -166,7 +166,7 @@ Click your own avatar in the top-right toolbar to open the Attachment dialog. Up
 |-------|:---------:|:--------:|:--------------:|:-------------:|:------:|:-----:|
 | **Requester** | 🔒 RO | 🔒 RO | 🔒 RO | 🔒 RO | 🔒 RO | 🔒 RO |
 | **Priority** | ✏️ N/A | ✏️ N/A | ✏️ **Editable** | ❌ | ❌ | ❌ |
-| **SalesRep_ID** | ❌ | ❌ | ❌ | ✏️ **Editable** | ❌ | ❌ |
+| **SalesRep_ID** | ❌ | ✏️ **Editable** | ❌ | ✏️ **Editable** | ❌ | ❌ |
 | **StartTime** | ❌ | ✏️ | ✏️ | ✏️ | ❌ | ❌ |
 | **EndTime** | ❌ | ✏️ | ✏️ | ✏️ | ❌ | ❌ |
 | **Update Result** | ✏️ | ✏️ | ✏️ | ✏️ | ✏️ **Write** | ❌ |
